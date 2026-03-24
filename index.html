@@ -1,24 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="am">
 <head>
-    <title>Manual Payment</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Deposit</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial; text-align: center; padding: 20px; }
-        .card { border: 1px solid #ccc; padding: 20px; border-radius: 10px; max-width: 300px; margin: auto; }
-        .telebirr { color: #00a8e8; font-weight: bold; }
-        .btn { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; width: 100%; max-width: 400px; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .header { color: #8a2be2; font-weight: bold; font-size: 20px; margin-bottom: 5px; }
+        .sub-header { font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+        
+        /* Bank Selection (Image 3) */
+        .bank-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .bank-card { border: 1px solid #ddd; padding: 10px; border-radius: 10px; cursor: pointer; }
+        .bank-card img { width: 40px; height: 40px; display: block; margin: 0 auto 5px; }
+        .bank-card span { font-size: 12px; font-weight: bold; }
+
+        /* Telebirr Details (Image 4) */
+        #telebirr-panel { display: none; text-align: left; border-top: 1px solid #eee; padding-top: 20px; }
+        .amount-header { background: #eee; padding: 10px; border-radius: 5px; font-weight: bold; text-align: center; margin-bottom: 15px; position: relative; }
+        .close-btn { position: absolute; right: 10px; top: 5px; cursor: pointer; }
+        .phone-box { text-align: center; font-size: 24px; color: #007bff; font-weight: bold; margin-bottom: 15px; }
+        .instruction { font-size: 13px; line-height: 1.5; margin-bottom: 15px; }
+        textarea { width: 100%; height: 80px; border: 1px solid #ccc; border-radius: 5px; padding: 10px; box-sizing: border-box; resize: none; }
+        .send-btn { background: #28a745; color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .support-link { text-align: center; margin-top: 15px; font-size: 13px; }
+        .support-link a { color: #007bff; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h3>Manual Payment Methods</h3>
-        <p>የመረጡትን የክፍያ መንገድ ተጭነው መረጃውን ይውሰዱ።</p>
-        <hr>
-        <p class="telebirr">Telebirr Details:</p>
-        <p>Phone: <b>0979429028</b></p>
-        <p>Name: <b>Yordanos</b></p>
-        <p>ገንዘቡን ከላኩ በኋላ ደረሰኙን ለAdmin በመላክ ሂሳብዎን ያስጭኑ።</p>
-        <button class="btn" onclick="window.location.href='https://t.me/your_admin_username'">Send Verification to Admin</button>
+
+<div class="container">
+    <div id="selection-screen">
+        <div class="header">Manual Deposit</div>
+        <div class="sub-header">Select your bank to deposit funds</div>
+        <div class="bank-options">
+            <div class="bank-card" onclick="showTelebirr()">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/9/93/CBE_logo.png/220px-CBE_logo.png" alt="CBE">
+                <span>CBE Bank</span>
+            </div>
+            <div class="bank-card" onclick="showTelebirr()">
+                <img src="https://www.combanketh.et/cbebirr/assets/img/logo.png" alt="CBE Birr">
+                <span>CBE Birr</span>
+            </div>
+            <div class="bank-card" onclick="showTelebirr()">
+                <img src="https://vignette.wikia.nocookie.net/logopedia/images/b/b5/Telebirr.png" alt="Telebirr">
+                <span>Telebirr</span>
+            </div>
+        </div>
+        <div style="font-size: 12px; color: #666;">Copyright © Allora-Groups 2025</div>
     </div>
+
+    <div id="telebirr-panel">
+        <div class="amount-header">
+            Telebirr 50 BIRR Deposit
+            <span class="close-btn" onclick="showSelection()">✖</span>
+        </div>
+        <div style="text-align: center; font-size: 12px; margin-bottom: 5px;">YORDANOS</div>
+        <div class="phone-box">0979429028</div>
+        
+        <div class="instruction">
+            1. ከላይ ባለው የቴሌብር አካውንት ብር ያስገቡ<br>
+            2. የደረሳችሁን አጭር የጽሁፍ መልዕክት (SMS) ሙሉውን ኮፒ (COPY) በማድረግ ከታች ባለው ሳጥን ላይ ፔስት (PASTE) በማድረግ ይላኩ
+        </div>
+
+        <div style="font-weight: bold; margin-bottom: 5px;">Enter Message</div>
+        <textarea id="sms-input" placeholder="ከ Telebirr የደረሳችሁን አጭር የጽሁፍ መልዕክት ወይም Transaction Number እዚህ ላይ ያስገቡ"></textarea>
+        
+        <button class="send-btn" onclick="sendToAdmin()">Send for Verification</button>
+        
+        <div class="support-link">
+            የሚያጋጥሙትን የክፍያ ችግር ለባለሙያ ማሳወቅ ይችላሉ ወይም <a href="https://t.me/Ardi_Bingo_Support">@Ardi_Bingo_Support</a> ላይ ማውራት ይችላሉ
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    function showTelebirr() {
+        document.getElementById('selection-screen').style.display = 'none';
+        document.getElementById('telebirr-panel').style.display = 'block';
+    }
+
+    function showSelection() {
+        document.getElementById('selection-screen').style.display = 'block';
+        document.getElementById('telebirr-panel').style.display = 'none';
+    }
+
+    function sendToAdmin() {
+        const message = document.getElementById('sms-input').value;
+        if (message.trim() === "") {
+            alert("እባክዎ መረጃውን ያስገቡ");
+            return;
+        }
+        // መረጃውን ወደ ቦቱ ይልካል
+        tg.sendData(message);
+        tg.close();
+    }
+</script>
+
 </body>
 </html>
