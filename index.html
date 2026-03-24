@@ -18,7 +18,7 @@
         .bank-card img { width: 50px; height: 50px; object-fit: contain; display: block; margin: 0 auto 8px; border-radius: 8px; }
         .bank-card span { font-size: 11px; font-weight: 700; color: #34495e; display: block; }
 
-        /* Telebirr Details Panel */
+        /* Payment Details Panel */
         #telebirr-panel { display: none; text-align: left; border-top: 2px solid #f8f9fa; padding-top: 20px; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -45,22 +45,24 @@
     <div id="selection-screen">
         <div class="header">Manual Deposit</div>
         <div class="sub-header">Select your bank to deposit funds</div>
+        
         <div class="bank-options">
             <div class="bank-card" onclick="showTelebirr('CBE Bank')">
-                <img src="https://i.postimg.cc/85M6S7mG/cbe-logo.png" alt="CBE">
+                <img src="https://i.ibb.co/LzN2V0B/cbe-logo.png" alt="CBE">
                 <span>CBE Bank</span>
             </div>
             
             <div class="bank-card" onclick="showTelebirr('CBE Birr')">
-                <img src="https://i.postimg.cc/vH8pM4G4/cbebirr.png" alt="CBE Birr">
+                <img src="https://i.ibb.co/sqvY8mX/cbebirr.png" alt="CBE Birr">
                 <span>CBE Birr</span>
             </div>
             
             <div class="bank-card" onclick="showTelebirr('Telebirr')">
-                <img src="https://i.postimg.cc/44fVvVz6/telebirr.png" alt="Telebirr">
+                <img src="https://i.ibb.co/vYm68Z3/telebirr.png" alt="Telebirr">
                 <span>Telebirr</span>
             </div>
         </div>
+        
         <div class="footer-copy">Copyright © Allora-Groups 2025</div>
     </div>
 
@@ -92,7 +94,6 @@
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.MainButton.hide();
 
     function showTelebirr(bankName) {
         document.getElementById('selected-bank').innerText = bankName;
@@ -114,7 +115,7 @@
             return;
         }
 
-        // መረጃውን ወደ ቴሌግራም ቦቱ ይልካል
+        // መረጃውን ወደ ቦቱ ይልካል
         const dataToSend = `Bank: ${bank}\nInfo: ${message}`;
         tg.sendData(dataToSend);
         tg.close();
