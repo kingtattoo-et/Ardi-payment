@@ -15,10 +15,9 @@
         .bank-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
         .bank-card { border: 1px solid #e0e0e0; padding: 12px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease; background: #fff; }
         .bank-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-color: #8e44ad; }
-        .bank-card img { width: 50px; height: 50px; object-fit: contain; display: block; margin: 0 auto 8px; border-radius: 8px; }
+        .bank-card img { width: 55px; height: 55px; object-fit: contain; display: block; margin: 0 auto 8px; }
         .bank-card span { font-size: 11px; font-weight: 700; color: #34495e; display: block; }
 
-        /* Payment Details Panel */
         #telebirr-panel { display: none; text-align: left; border-top: 2px solid #f8f9fa; padding-top: 20px; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -28,14 +27,8 @@
         .name-label { text-align: center; font-size: 14px; font-weight: bold; color: #555; margin-bottom: 20px; }
         
         .instruction { font-size: 13px; line-height: 1.6; color: #444; background: #fdf9ff; padding: 15px; border-radius: 10px; border-left: 4px solid #8e44ad; margin-bottom: 20px; }
-        .instruction b { color: #e74c3c; }
-        
-        textarea { width: 100%; height: 100px; border: 2px solid #eee; border-radius: 12px; padding: 12px; box-sizing: border-box; resize: none; font-size: 14px; outline: none; transition: border-color 0.3s; }
-        textarea:focus { border-color: #8e44ad; }
-        
-        .send-btn { background: #27ae60; color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
-        .support-link { text-align: center; margin-top: 25px; font-size: 12px; color: #7f8c8d; }
-        .support-link a { color: #2980b9; text-decoration: none; font-weight: bold; }
+        textarea { width: 100%; height: 100px; border: 2px solid #eee; border-radius: 12px; padding: 12px; box-sizing: border-box; resize: none; font-size: 14px; outline: none; }
+        .send-btn { background: #27ae60; color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 20px; cursor: pointer; }
         .footer-copy { font-size: 11px; color: #bdc3c7; margin-top: 20px; }
     </style>
 </head>
@@ -48,17 +41,17 @@
         
         <div class="bank-options">
             <div class="bank-card" onclick="showTelebirr('CBE Bank')">
-                <img src="https://i.ibb.co/LzN2V0B/cbe-logo.png" alt="CBE">
+                <img src="https://upload.wikimedia.org/wikipedia/en/9/93/CBE_logo.png" alt="CBE">
                 <span>CBE Bank</span>
             </div>
             
             <div class="bank-card" onclick="showTelebirr('CBE Birr')">
-                <img src="https://i.ibb.co/sqvY8mX/cbebirr.png" alt="CBE Birr">
+                <img src="https://www.combanketh.et/cbebirr/images/cbe_birr_logo.png" alt="CBE Birr">
                 <span>CBE Birr</span>
             </div>
             
             <div class="bank-card" onclick="showTelebirr('Telebirr')">
-                <img src="https://i.ibb.co/vYm68Z3/telebirr.png" alt="Telebirr">
+                <img src="https://www.ethiotelecom.et/wp-content/uploads/2021/05/telebirr-logo.png" alt="Telebirr">
                 <span>Telebirr</span>
             </div>
         </div>
@@ -77,17 +70,11 @@
         
         <div class="instruction">
             1. ከላይ ባለው አካውንት ብር ያስገቡ<br>
-            2. የደረሳችሁን የጽሁፍ መልዕክት <b>(SMS)</b> ሙሉውን ኮፒ <b>(COPY)</b> በማድረግ ከታች ባለው ሳጥን ላይ ፔስት <b>(PASTE)</b> አድርገው ይላኩ።
+            2. የደረሳችሁን የጽሁፍ መልዕክት <b>(SMS)</b> ሙሉውን ኮፒ በማድረግ ከታች ባለው ሳጥን ላይ ፔስት አድርገው ይላኩ።
         </div>
 
-        <div style="text-align: left; font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #333;">Enter Message</div>
-        <textarea id="sms-input" placeholder="ከ ባንክ የደረሳችሁን SMS ወይም Transaction Number እዚህ ያስገቡ..."></textarea>
-        
+        <textarea id="sms-input" placeholder="ከ ባንክ የደረሳችሁን SMS እዚህ ያስገቡ..."></textarea>
         <button class="send-btn" onclick="sendToAdmin()">Send for Verification</button>
-        
-        <div class="support-link">
-            ችግር ካጋጠመዎት: <a href="https://t.me/Ardi_Bingo_Support">@Ardi_Bingo_Support</a>
-        </div>
     </div>
 </div>
 
@@ -115,9 +102,7 @@
             return;
         }
 
-        // መረጃውን ወደ ቦቱ ይልካል
-        const dataToSend = `Bank: ${bank}\nInfo: ${message}`;
-        tg.sendData(dataToSend);
+        tg.sendData(`Bank: ${bank}\nInfo: ${message}`);
         tg.close();
     }
 </script>
