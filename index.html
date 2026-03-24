@@ -47,15 +47,17 @@
         <div class="sub-header">Select your bank to deposit funds</div>
         <div class="bank-options">
             <div class="bank-card" onclick="showTelebirr('CBE Bank')">
-                <img src="https://raw.githubusercontent.com/kingtattoo-et/Ardi-payment/main/cbe_logo.png" onerror="this.src='https://upload.wikimedia.org/wikipedia/en/9/93/CBE_logo.png'" alt="CBE">
+                <img src="https://i.postimg.cc/85M6S7mG/cbe-logo.png" alt="CBE">
                 <span>CBE Bank</span>
             </div>
+            
             <div class="bank-card" onclick="showTelebirr('CBE Birr')">
-                <img src="https://logowik.com/content/uploads/images/commercial-bank-of-ethiopia-cbe7461.logowik.com.webp" alt="CBE Birr">
+                <img src="https://i.postimg.cc/vH8pM4G4/cbebirr.png" alt="CBE Birr">
                 <span>CBE Birr</span>
             </div>
+            
             <div class="bank-card" onclick="showTelebirr('Telebirr')">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-8Z4-Yh6qB7T2iO8UfBv8kO6z-fHlS9wVQ&s" alt="Telebirr">
+                <img src="https://i.postimg.cc/44fVvVz6/telebirr.png" alt="Telebirr">
                 <span>Telebirr</span>
             </div>
         </div>
@@ -112,6 +114,7 @@
             return;
         }
 
+        // መረጃውን ወደ ቴሌግራም ቦቱ ይልካል
         const dataToSend = `Bank: ${bank}\nInfo: ${message}`;
         tg.sendData(dataToSend);
         tg.close();
