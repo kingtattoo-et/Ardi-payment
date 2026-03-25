@@ -1,0 +1,21 @@
+{
+  "name": "yared-bingo-bot",
+  "version": "1.0.0",
+  "description": "Telegram Mini App Bingo Bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "bingo"
+  ],
+  "author": "Yared",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "telegraf": "^4.16.3"
+  }
+}
