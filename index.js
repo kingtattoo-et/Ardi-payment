@@ -1,22 +1,25 @@
-const express = require('express');
+const { Telegraf, Markup } = require('telegraf');
+const express = require('express'); // Express ተጨምሯል
+
+// 1. የ Express Setup (ለ Render Port ስህተት መፍትሄ)
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Bot is running!');
+    res.send('Ardi Bingo Bot is running!');
 });
 
 app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
-});const { Telegraf, Markup } = require('telegraf');
+    console.log(`Server is listening on port ${port}`);
+});
 
-// የቦት ቶክን
+// 2. የቦት Setup
 const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
 
-// የአድሚን ቴሌግራም ID (እዚህ ጋር የራስህን ID ቁጥር ተካው)
+// የአድሚን ቴሌግራም ID
 const ADMIN_ID = '6633658514'; 
 
-// የተጠቃሚዎች መረጃ ጊዜያዊ ማከማቻ
+// የተጠቃሚዎች መረጃ ጊዜያዊ ማከማቻ (ማሳሰቢያ፡ ሰርቨሩ ሲጠፋ ይህ ይጠፋል)
 let userProfiles = {};
 
 // ቦቱ ሲጀመር (Start Menu)
@@ -57,7 +60,7 @@ bot.start((ctx) => {
     );
 });
 
-// --- አዲሱ ክፍል፡ ከ WebApp የሚመጣ ዳታ መቀበያ ---
+// --- ከ WebApp የሚመጣ ዳታ መቀበያ ---
 bot.on('web_app_data', async (ctx) => {
     try {
         const data = JSON.parse(ctx.webAppData.data.json());
@@ -66,7 +69,7 @@ bot.on('web_app_data', async (ctx) => {
         // 1. ለተጠቃሚው የሚላክ ማረጋገጫ
         await ctx.replyWithMarkdown(`✅ *የክፍያ መረጃ ደርሶናል!*\n\n*ባንክ:* ${data.bank}\n*መረጃው:* ${data.message}\n\nእባክዎ መረጃው ተረጋግጦ እስኪጨመር ድረስ ለጥቂት ደቂቃዎች በትዕግስት ይጠብቁ።`);
 
-        // 2. ለአድሚን (ለአንተ) የሚላክ ማሳወቂያ
+        // 2. ለአድሚን የሚላክ ማሳወቂያ
         await ctx.telegram.sendMessage(ADMIN_ID, 
             `🔔 *አዲስ የክፍያ ጥያቄ!*\n\n` +
             `👤 *ከ:* @${user.username || user.first_name}\n` +
@@ -84,25 +87,24 @@ bot.on('web_app_data', async (ctx) => {
 
 // --- በተኖቹ ሲነኩ የሚሰጡ ምላሾች ---
 
-// 1. ለ Check Balance ምላሽ
 bot.action('balance', (ctx) => {
-    const user = userProfiles[ctx.from.id] || { username: "Guest", balance: 0, coin: 0 };
+    const user = userProfiles[ctx.from.id] || { username: ctx.from.username || "Guest", balance: 0, coin: 0 };
     ctx.answerCbQuery();
     const balanceMsg = `👤 *Username:* ${user.username}\n💰 *Balance:* ${user.balance.toFixed(2)} ETB\n🪙 *Coin:* ${user.coin.toFixed(2)}`;
     ctx.replyWithMarkdown(balanceMsg);
 });
 
-// 2. ለ Deposit ምላሽ
 bot.action('deposit', (ctx) => {
     ctx.answerCbQuery();
-    ctx.replyWithMarkdown(`📥 *Min Amount:* 50 ETB\n\nእባክዎ ማስገባት የሚፈልጉትን የገንዘብ መጠን ይጻፉ (ምሳሌ: 100)`);
+    ctx.replyWithMarkdown(`📥 *ትንሹ ተቀማጭ መጠን:* 50 ETB\n\nእባክዎ ማስገባት የሚፈልጉትን የገንዘብ መጠን ይጻፉ (ምሳሌ: 100)`);
 });
 
-// 3. ተጠቃሚው መጠን ሲያስገባ
+// ተጠቃሚው መጠን ሲያስገባ
 bot.on('text', (ctx) => {
     const text = ctx.message.text;
 
-    if (!isNaN(text) && text >= 50) {
+    // ቁጥር መሆኑንና ከ50 በላይ መሆኑን ማረጋገጥ
+    if (!isNaN(text) && Number(text) >= 50) {
         const paymentUrl = "https://kingtattoo-et.github.io/Ardi-payment/"; 
         
         ctx.reply(`ተቀማጭ መጠን፦ ${text} ETB\n\nእባክዎ ከታች ያለውን በተን ተጭነው ክፍያውን ይፈጽሙ፦`, 
@@ -111,27 +113,29 @@ bot.on('text', (ctx) => {
             ])
         );
     } 
-    else if (!isNaN(text) && text < 50) {
+    else if (!isNaN(text) && Number(text) < 50) {
         ctx.reply("❌ ትንሹ ተቀማጭ መጠን 50 ETB ነው። እባክዎ ከ50 በላይ የሆነ ቁጥር ድጋሚ ያስገቡ።");
     }
 });
 
-// 4. Username ለመቀየር
 bot.action('username_change', (ctx) => {
     ctx.answerCbQuery();
     ctx.reply('እባክዎ አዲሱን መለያ ስም በዚሁ መልክ ይላኩ፦\n/setname ያንተ_ስም');
 });
 
 bot.command('setname', (ctx) => {
-    const newName = ctx.message.text.split(' ')[1];
+    const args = ctx.message.text.split(' ');
+    const newName = args[1];
     if (newName && userProfiles[ctx.from.id]) {
         userProfiles[ctx.from.id].username = newName;
         ctx.reply(`✅ ስምዎ ወደ *${newName}* ተቀይሯል!`, { parse_mode: 'Markdown' });
+    } else {
+        ctx.reply("❌ እባክዎ ስም በትክክል ያስገቡ። ምሳሌ፦ /setname Abebe");
     }
 });
 
 // ቦቱን ማስነሻ
-bot.launch().then(() => console.log("Ardi Bingo Bot is LIVE with WebApp!"));
+bot.launch().then(() => console.log("Ardi Bingo Bot is LIVE on Render!"));
 
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
