@@ -1,4 +1,14 @@
-const { Telegraf, Markup } = require('telegraf');
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Bot is running!');
+});
+
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});const { Telegraf, Markup } = require('telegraf');
 
 // የቦት ቶክን
 const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
