@@ -14,7 +14,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
 
 // --- 2. ዋና መረጃዎች ---
-const ADMIN_ID = 1046142540; // ያንተ ID
+const ADMIN_ID = 8684712579; // ያንተ ID
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 
