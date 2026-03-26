@@ -16,8 +16,8 @@
     <div class="card">
         <div id="select">
             <h3>ባንክ ይምረጡ</h3>
-            <div class="bank" onclick="sel('CBE Bank', '1000277987067')">CBE Bank</div>
-            <div class="bank" onclick="sel('Telebirr', '0979429028')">Telebirr</div>
+            <div class="bank" onclick="sel('CBE Bank')">CBE Bank</div>
+            <div class="bank" onclick="sel('Telebirr')">Telebirr</div>
         </div>
         <div id="form" style="display:none">
             <h4 id="bn"></h4>
@@ -29,7 +29,7 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         let bName = "";
-        function sel(b, n) {
+        function sel(b) {
             bName = b;
             document.getElementById('select').style.display='none';
             document.getElementById('form').style.display='block';
@@ -37,7 +37,8 @@
         }
         function send() {
             const val = document.getElementById('sms').value;
-            if(val.length < 5) return alert("SMS ያስገቡ!");
+            if(val.length < 5) return alert("እባክዎ SMS ያስገቡ!");
+            // ዳታውን ለቦቱ መላክ
             tg.sendData(JSON.stringify({bank: bName, message: val}));
             tg.close();
         }
