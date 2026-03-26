@@ -1,180 +1,109 @@
-<!DOCTYPE html>
-<html lang="am">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual Deposit</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; }
-        .container { background: white; width: 100%; max-width: 420px; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; min-height: 90vh; position: relative; padding-bottom: 60px; overflow: hidden; }
-        
-        /* Ardi Bingo Logo Style */
-        .main-logo { width: 90px; height: 90px; margin-bottom: 10px; border-radius: 50%; object-fit: cover; border: 2px solid #8e44ad; }
-        .header { color: #8e44ad; font-weight: 800; font-size: 22px; margin-bottom: 5px; }
-        .sub-header { font-size: 14px; color: #444; margin-bottom: 25px; font-weight: 600; }
+const { Telegraf, Markup } = require('telegraf');
+const express = require('express');
 
-        /* Bank Selection Grid with 3D effect */
-        .bank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 30px; }
-        .bank-card { 
-            background: #fff;
-            border: 1px solid #eee; 
-            padding: 15px 5px; 
-            border-radius: 15px; 
-            cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .bank-card:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            border-color: #8e44ad;
-        }
-        .bank-card:active { transform: scale(0.95); }
-        .bank-card img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
-        .bank-card div { font-size: 12px; font-weight: bold; color: #333; }
+const app = express();
+app.get('/', (req, res) => res.send('Ardi Bingo is LIVE!'));
+app.listen(process.env.PORT || 10000);
 
-        /* Deposit Panel */
-        #deposit-panel { display: none; text-align: center; }
-        .status-bar { background: #8e44ad; color: white; padding: 12px; border-radius: 10px; font-size: 15px; margin-bottom: 20px; position: relative; font-weight: bold; }
-        .close-btn { position: absolute; right: 15px; cursor: pointer; font-size: 18px; }
-        
-        .account-info { background: #fcfcfc; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d1d1d1; }
-        .info-row { margin-bottom: 15px; }
-        .label { font-size: 11px; color: #888; display: block; letter-spacing: 1px; margin-bottom: 4px; }
-        .value { font-size: 20px; font-weight: 800; color: #2c3e50; }
+const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
 
-        .instruction { font-size: 14px; text-align: left; background: #fffbe6; padding: 12px; border-left: 5px solid #f1c40f; margin-bottom: 20px; line-height: 1.6; color: #444; }
-        .instruction b { color: #e67e22; }
+// --- 1. ዋና መረጃዎች ---
+const ADMIN_ID = 1046142540; // ያንተ ID
+const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
+const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 
-        textarea { width: 100%; height: 100px; border: 1.5px solid #ddd; border-radius: 10px; padding: 12px; box-sizing: border-box; resize: none; margin-bottom: 5px; font-size: 14px; outline: none; }
-        textarea:focus { border-color: #8e44ad; }
-        
-        .format-hint { font-size: 12px; color: #888; text-align: left; margin-bottom: 15px; padding-left: 5px; }
+// ጊዜያዊ ዳታቤዝ
+let players = {}; 
 
-        .verify-btn { background: #2ecc71; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        
-        .support-link { display: inline-block; margin-top: 20px; font-size: 13px; color: #3498db; text-decoration: none; font-weight: 600; }
-
-        /* New Blue Footer Bar */
-        .blue-footer {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px;
-            font-size: 12px;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            box-sizing: border-box;
-            font-weight: 500;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div id="selection-screen">
-        <img src="ardi logo.png.png" class="main-logo" alt="Ardi Bingo"> 
-        <div class="header">Manual Deposit</div>
-        <div class="sub-header">Select your bank to deposit funds</div>
-
-        <div class="bank-grid">
-            <div class="bank-card" onclick="openDeposit('CBE Bank', '1000277987067')">
-                <img src="cbe.png" alt="CBE">
-                <div>CBE Bank</div>
-            </div>
-            <div class="bank-card" onclick="openDeposit('CBE Birr', '0979429028')">
-                <img src="cbebirr.png" alt="CBE Birr">
-                <div>CBE Birr</div>
-            </div>
-            <div class="bank-card" onclick="openDeposit('Telebirr', '0979429028')">
-                <img src="telebirr.png" alt="Telebirr">
-                <div>Telebirr</div>
-            </div>
-        </div>
-        
-        <a href="https://t.me/ArdiiiBingoBot" class="support-link">@ArdiiiBingoBot Support</a>
-    </div>
-
-    <div id="deposit-panel">
-        <div class="status-bar">
-            <span id="display-bank">Bank</span> Deposit
-            <span class="close-btn" onclick="goBack()">✕</span>
-        </div>
-
-        <div class="account-info">
-            <div class="info-row">
-                <span class="label">ACCOUNT NAME</span>
-                <span class="value">Yordanos</span>
-            </div>
-            <div class="info-row">
-                <span class="label" id="acc-label">NUMBER</span>
-                <span class="value" id="acc-number">251979429028</span>
-            </div>
-        </div>
-
-        <div class="instruction">
-            1. ከላይ ባለው ቁጥር ብር ያስገቡ።<br>
-            2. የደረሳችሁን የጽሁፍ መልዕክት (SMS) ሙሉውን ኮፒ (COPY) በማድረግ ከታች ባለው ሳጥን ላይ ፔስት (PASTE) በማድረግ ይላኩት።
-        </div>
-
-        <textarea id="sms-input" placeholder="የባንክ SMS እዚህ ጋር ፔስት ያድርጉ..."></textarea>
-        <div class="format-hint">E.g Format: CA999DASAD</div>
-        
-        <button class="verify-btn" onclick="sendToAdmin()">Send for Verification</button>
-        
-        <div style="margin-top: 15px; font-size: 13px; color: #444;">
-            የሚያጋጥማችሁ የክፍያ ችግር ካለ በ @ArdiiiBingoBot ማውራት ይችላሉ።
-        </div>
-    </div>
-
-    <div class="blue-footer">
-        © 2026 Ardi Bingo. All rights reserved. Powered by Allora-Groups.
-    </div>
-</div>
-
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    function openDeposit(bank, number) {
-        document.getElementById('selection-screen').style.display = 'none';
-        document.getElementById('deposit-panel').style.display = 'block';
-        document.getElementById('display-bank').innerText = bank;
-        // CBE Bank ካልሆነ በስተቀር ቁጥሩን በተሰጠው 251... ቁጥር እንተካዋለን
-        if(bank === 'CBE Bank') {
-            document.getElementById('acc-number').innerText = '1000277987067';
-        } else {
-            document.getElementById('acc-number').innerText = '251979429028';
-        }
-        
-        document.getElementById('acc-label').innerText = (bank === 'CBE Bank') ? "ACCOUNT NUMBER" : "PHONE NUMBER";
+// --- 2. ቦቱ ሲጀመር (Start) ---
+bot.start((ctx) => {
+    const userId = ctx.from.id;
+    if (!players[userId]) {
+        players[userId] = { balance: 0, name: ctx.from.first_name };
     }
 
-    function goBack() {
-        document.getElementById('selection-screen').style.display = 'block';
-        document.getElementById('deposit-panel').style.display = 'none';
-    }
+    const welcomeMessage = `🎉 *Welcome To Ardi Bingo!* 🎉\n\n🕹 *Every Square Counts – Grab Your Cartela, Join The Game, and Let the Fun Begin!*`;
 
-    function sendToAdmin() {
-        const sms = document.getElementById('sms-input').value;
-        const bank = document.getElementById('display-bank').innerText;
+    return ctx.replyWithPhoto({ url: LOGO_URL }, {
+        caption: welcomeMessage,
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+            [Markup.button.callback('🎮 Play Now', 'play')],
+            [Markup.button.callback('💰 Check Balance', 'balance'), Markup.button.callback('💵 Make a Deposit', 'deposit')],
+            [Markup.button.callback('Support 📞', 'support'), Markup.button.callback('📖 Instructions', 'instructions')],
+            [Markup.button.callback('✉️ Invite', 'invite'), Markup.button.callback('🏆 Leaderboard', 'leaderboard')]
+        ])
+    });
+});
+
+// --- 3. Deposit Process ---
+bot.action('deposit', (ctx) => {
+    ctx.answerCbQuery();
+    return ctx.replyWithMarkdown('`Deposit Amount` \n*Min Amount: 50 ETB*\n\nእባክዎ ማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)');
+});
+
+// --- 4. መጠን መቀበያ እና WebApp መክፈቻ ---
+bot.on('text', async (ctx) => {
+    const userId = ctx.from.id;
+    const msgText = ctx.message.text;
+
+    if (!isNaN(msgText) && parseInt(msgText) >= 50) {
+        players[userId].lastRequestedAmount = parseInt(msgText);
         
-        if(sms.trim().length < 5) {
-            tg.showAlert("እባክዎ ትክክለኛ የSMS መረጃ ያስገቡ!");
-            return;
+        return ctx.replyWithMarkdown(
+            `የመረጡት መጠን: *${msgText} ETB*\n\nእባክዎ ከታች ያለውን "Manual-Payment" በመጫን ክፍያ ይፈጽሙ። በዌብሳይቱ ላይ "Send for Verification" ሲጫኑ የባንክ SMS እዚህ "Paste" አድርገው ይላኩ።`, 
+            Markup.inlineKeyboard([
+                [Markup.button.webApp('Manual-Payment', PAYMENT_WEB_URL)]
+            ])
+        );
+    }
+});
+
+// --- 5. ከ WebApp (Send for Verification) የሚመጣ መረጃ ---
+bot.on('web_app_data', async (ctx) => {
+    const userId = ctx.from.id;
+    const data = JSON.parse(ctx.webAppData.data.json()); // ከድረ-ገጹ የመጣው ዳታ
+    const requestedAmount = players[userId]?.lastRequestedAmount || 50;
+
+    await ctx.reply('እናመሰግናለን! መረጃው ለአድሚን ተልኳል። እስከሚጸድቅ ድረስ ትንሽ ይጠብቁ።');
+
+    // ለአድሚኑ (ላንተ) መልዕክት ይላካል
+    await bot.telegram.sendMessage(ADMIN_ID, 
+        `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n🆔 ID: \`${userId}\`\n💰 መጠን: *${requestedAmount} ETB*\n🏦 ባንክ: *${data.bank}*\n\n📝 *SMS:* \`${data.message}\``, 
+        {
+            parse_mode: 'Markdown',
+            ...Markup.inlineKeyboard([
+                [Markup.button.callback(`✅ Approve ${requestedAmount} ETB`, `approve_${userId}_${requestedAmount}`)],
+                [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
+            ])
         }
+    );
+});
 
-        const data = {
-            bank: bank,
-            message: sms
-        };
-        
-        tg.sendData(JSON.stringify(data));
-        tg.close();
-    }
-</script>
+// --- 6. አድሚን Approve/Cancel ሲያደርግ ---
+bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
+    const targetUserId = ctx.match[1];
+    const amount = parseInt(ctx.match[2]);
 
-</body>
-</html>
+    if (!players[targetUserId]) players[targetUserId] = { balance: 0 };
+    players[targetUserId].balance += amount;
+
+    await bot.telegram.sendMessage(targetUserId, `✅ ክፍያዎ ተረጋግጧል! *${amount} ETB* ወደ ባላንስዎ ተጨምሯል።`);
+    ctx.answerCbQuery('ተጽድቋል!');
+    return ctx.editMessageText(`✅ ለተጠቃሚ \`${targetUserId}\` *${amount} ETB* አጽድቀሃል።`);
+});
+
+bot.action(/cancel_(\d+)/, async (ctx) => {
+    const targetUserId = ctx.match[1];
+    await bot.telegram.sendMessage(targetUserId, `❌ ይቅርታ፣ የላኩት የክፍያ መረጃ ተቀባይነት አላገኘም።`);
+    ctx.answerCbQuery('ተሰርዟል');
+    return ctx.editMessageText(`❌ የID \`${targetUserId}\` ጥያቄ ውድቅ ተደርጓል።`);
+});
+
+bot.action('balance', (ctx) => {
+    const userId = ctx.from.id;
+    const balance = players[userId]?.balance || 0;
+    return ctx.reply(`የአሁኑ ባላንስዎ: ${balance} ETB`);
+});
+
+bot.launch().then(() => console.log("🚀 Ardi Bingo Bot is LIVE and Running!"));
