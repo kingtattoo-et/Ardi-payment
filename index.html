@@ -1,3 +1,84 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Deposit</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .container { background: white; width: 100%; max-width: 420px; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; min-height: 90vh; position: relative; padding-bottom: 60px; overflow: hidden; }
+        .main-logo { width: 90px; height: 90px; margin-bottom: 10px; border-radius: 50%; object-fit: cover; border: 2px solid #8e44ad; }
+        .header { color: #8e44ad; font-weight: 800; font-size: 22px; margin-bottom: 5px; }
+        .sub-header { font-size: 14px; color: #444; margin-bottom: 25px; font-weight: 600; }
+        .bank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 30px; }
+        .bank-card { background: #fff; border: 1px solid #eee; padding: 15px 5px; border-radius: 15px; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .bank-card img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 8px; }
+        .bank-card div { font-size: 12px; font-weight: bold; color: #333; }
+        #deposit-panel { display: none; text-align: center; }
+        .status-bar { background: #8e44ad; color: white; padding: 12px; border-radius: 10px; font-size: 15px; margin-bottom: 20px; position: relative; font-weight: bold; }
+        .close-btn { position: absolute; right: 15px; cursor: pointer; font-size: 18px; }
+        .account-info { background: #fcfcfc; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed #d1d1d1; }
+        .info-row { margin-bottom: 15px; }
+        .label { font-size: 11px; color: #888; display: block; letter-spacing: 1px; margin-bottom: 4px; }
+        .value { font-size: 20px; font-weight: 800; color: #2c3e50; }
+        .instruction { font-size: 14px; text-align: left; background: #fffbe6; padding: 12px; border-left: 5px solid #f1c40f; margin-bottom: 20px; line-height: 1.6; color: #444; }
+        textarea { width: 100%; height: 100px; border: 1.5px solid #ddd; border-radius: 10px; padding: 12px; box-sizing: border-box; resize: none; margin-bottom: 5px; font-size: 14px; outline: none; }
+        .verify-btn { background: #2ecc71; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .blue-footer { background-color: #2c3e50; color: #ecf0f1; padding: 15px; font-size: 12px; position: absolute; bottom: 0; left: 0; width: 100%; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="selection-screen">
+        <img src="ardi logo.png.png" class="main-logo" alt="Ardi Bingo"> 
+        <div class="header">Manual Deposit</div>
+        <div class="sub-header">Select your bank to deposit funds</div>
+
+        <div class="bank-grid">
+            <div class="bank-card" onclick="openDeposit('CBE Bank', '1000277987067')">
+                <img src="cbe.png" alt="CBE">
+                <div>CBE Bank</div>
+            </div>
+            <div class="bank-card" onclick="openDeposit('CBE Birr', '0979429028')">
+                <img src="cbebirr.png" alt="CBE Birr">
+                <div>CBE Birr</div>
+            </div>
+            <div class="bank-card" onclick="openDeposit('Telebirr', '0979429028')">
+                <img src="telebirr.png" alt="Telebirr">
+                <div>Telebirr</div>
+            </div>
+        </div>
+        <a href="https://t.me/ArdiiiBingoBot" style="text-decoration: none; color: #3498db; font-size: 13px; font-weight: 600;">@ArdiiiBingoBot Support</a>
+    </div>
+
+    <div id="deposit-panel">
+        <div class="status-bar">
+            <span id="display-bank">Bank</span> Deposit
+            <span class="close-btn" onclick="goBack()">✕</span>
+        </div>
+        <div class="account-info">
+            <div class="info-row">
+                <span class="label">ACCOUNT NAME</span>
+                <span class="value">Yordanos</span>
+            </div>
+            <div class="info-row">
+                <span class="label" id="acc-label">NUMBER</span>
+                <span class="value" id="acc-number">251979429028</span>
+            </div>
+        </div>
+        <div class="instruction">
+            1. ከላይ ባለው ቁጥር ብር ያስገቡ።<br>
+            2. የደረሳችሁን የጽሁፍ መልዕክት (SMS) ኮፒ በማድረግ ከታች ባለው ሳጥን ላይ ፔስት በማድረግ ይላኩት።
+        </div>
+        <textarea id="sms-input" placeholder="የባንክ SMS እዚህ ጋር ፔስት ያድርጉ..."></textarea>
+        <button class="verify-btn" onclick="sendToAdmin()">Send for Verification</button>
+    </div>
+
+    <div class="blue-footer">© 2026 Ardi Bingo. Powered by Allora-Groups.</div>
+</div>
+
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
@@ -6,12 +87,7 @@
         document.getElementById('selection-screen').style.display = 'none';
         document.getElementById('deposit-panel').style.display = 'block';
         document.getElementById('display-bank').innerText = bank;
-        
-        if(bank === 'CBE Bank') {
-            document.getElementById('acc-number').innerText = '1000277987067';
-        } else {
-            document.getElementById('acc-number').innerText = '251979429028';
-        }
+        document.getElementById('acc-number').innerText = (bank === 'CBE Bank') ? '1000277987067' : '251979429028';
         document.getElementById('acc-label').innerText = (bank === 'CBE Bank') ? "ACCOUNT NUMBER" : "PHONE NUMBER";
     }
 
@@ -20,24 +96,16 @@
         document.getElementById('deposit-panel').style.display = 'none';
     }
 
-    // መረጃውን ወደ ቦቱ የሚልከው ዋናው ክፍል
     function sendToAdmin() {
         const sms = document.getElementById('sms-input').value;
         const bank = document.getElementById('display-bank').innerText;
-        
         if(sms.trim().length < 5) {
-            tg.showAlert("እባክዎ ትክክለኛ የSMS መረጃ ያስገኑ!");
+            tg.showAlert("እባክዎ ትክክለኛ የSMS መረጃ ያስገቡ!");
             return;
         }
-
-        // ዳታውን በ JSON መልክ እናዘጋጃለን
-        const data = {
-            bank: bank,
-            message: sms
-        };
-        
-        // ይህ ትዕዛዝ ዳታውን ወደ ቦቱ ይልካል
-        tg.sendData(JSON.stringify(data));
+        tg.sendData(JSON.stringify({ bank: bank, message: sms }));
         tg.close();
     }
 </script>
+</body>
+</html>
