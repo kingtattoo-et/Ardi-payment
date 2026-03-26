@@ -8,7 +8,6 @@ app.listen(process.env.PORT || 10000);
 
 const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
 
-// --- ዳታቤዝ ፋይል ---
 const DB_FILE = './database.json';
 let players = {};
 
@@ -35,8 +34,7 @@ bot.start((ctx) => {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
             [Markup.button.callback('🎮 Play Now', 'play')],
-            [Markup.button.callback('💰 Check Balance', 'balance'), Markup.button.callback('💵 Make a Deposit', 'deposit')],
-            [Markup.button.callback('Support 📞', 'support'), Markup.button.callback('✉️ Invite', 'invite')]
+            [Markup.button.callback('💰 Balance', 'balance'), Markup.button.callback('💵 Deposit', 'deposit')]
         ])
     });
 });
@@ -50,30 +48,34 @@ bot.on('text', async (ctx) => {
     const userId = ctx.from.id;
     const msgText = ctx.message.text;
 
-    // ተጠቃሚው መጠን ካስገባ
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
         players[userId].lastAmount = parseInt(msgText);
         saveToDB();
-        return ctx.replyWithMarkdown(`የመረጡት መጠን: *${msgText} ETB*`, 
-            Markup.inlineKeyboard([[Markup.button.webApp('💳 Manual-Payment', PAYMENT_WEB_URL)]])
+        
+        // ዋናው ለውጥ እዚህ ጋር ነው፡ ታችኛው ኪቦርድ (Reply Keyboard) ላይ ነው ማምጣት ያለብን
+        return ctx.replyWithMarkdown(`የመረጡት መጠን: *${msgText} ETB*\n\nከታች ያለውን **"Open Payment Screen"** ቁልፍ ተጭነው ይክፈቱ።`, 
+            Markup.keyboard([
+                [Markup.button.webApp('💳 Open Payment Screen', PAYMENT_WEB_URL)]
+            ]).resize().oneTime()
         );
     }
+});
 
-    // ከዌብ አፕ የሚመጣ ዳታ እዚህ ጋር ነው የሚመጣው
-    if (ctx.message.web_app_data) {
-        const data = JSON.parse(ctx.message.web_app_data.data);
-        const amount = players[userId]?.lastAmount || 50;
+// ዳታው ሲመጣ የሚቀበለው ክፍል
+bot.on('web_app_data', async (ctx) => {
+    const userId = ctx.from.id;
+    const data = JSON.parse(ctx.webAppData.data.json());
+    const amount = players[userId]?.lastAmount || 50;
 
-        await ctx.reply('መረጃው ለአድሚን ተልኳል!');
+    await ctx.reply('እናመሰግናለን! መረጃው ለአድሚን ተልኳል።', Markup.removeKeyboard()); // ቁልፉን ያጠፋዋል
 
-        return bot.telegram.sendMessage(ADMIN_ID, 
-            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n🆔 ID: \`${userId}\`\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${data.bank}*\n\n📝 *SMS:* \`${data.message}\``,
-            Markup.inlineKeyboard([
-                [Markup.button.callback(`✅ Approve ${amount} ETB`, `approve_${userId}_${amount}`)],
-                [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
-            ])
-        );
-    }
+    return bot.telegram.sendMessage(ADMIN_ID, 
+        `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${data.bank}*\n\n📝 *SMS:* \`${data.message}\``,
+        Markup.inlineKeyboard([
+            [Markup.button.callback(`✅ Approve ${amount}`, `approve_${userId}_${amount}`)],
+            [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
+        ])
+    );
 });
 
 bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
@@ -86,4 +88,4 @@ bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
     return ctx.editMessageText(`✅ ለ ID ${targetId} *${amount} ETB* አጽድቀሃል።`);
 });
 
-bot.launch().then(() => console.log("🚀 Bot is LIVE!"));
+bot.launch().then(() => console.log("🚀 Bot is LIVE and fixed!"));
