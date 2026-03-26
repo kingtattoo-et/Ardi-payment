@@ -12,7 +12,7 @@ const ADMIN_ID = 1046142540; // ያንተ ID
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 
-// ጊዜያዊ ዳታቤዝ (ቦቱ ሲጠፋ ይጠፋል)
+// ጊዜያዊ ዳታቤዝ
 let players = {}; 
 
 // --- 2. ቦቱ ሲጀመር (Start) ---
@@ -36,18 +36,17 @@ bot.start((ctx) => {
     });
 });
 
-// --- 3. Deposit Process (መጠን መጠየቂያ) ---
+// --- 3. Deposit Process ---
 bot.action('deposit', (ctx) => {
     ctx.answerCbQuery();
     return ctx.replyWithMarkdown('`Deposit Amount` \n*Min Amount: 50 ETB*\n\nእባክዎ ማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)');
 });
 
-// --- 4. መጠን መቀበያ እና ወደ WebApp መላኪያ ---
+// --- 4. መጠን መቀበያ እና WebApp መክፈቻ ---
 bot.on('text', async (ctx) => {
     const userId = ctx.from.id;
     const msgText = ctx.message.text;
 
-    // ተጠቃሚው ቁጥር (መጠን) ከላከ
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
         players[userId].lastRequestedAmount = parseInt(msgText);
         
@@ -58,30 +57,30 @@ bot.on('text', async (ctx) => {
             ])
         );
     }
-
-    // ተጠቃሚው SMS (ጽሁፍ) ከላከ - ለአድሚን ይላካል
-    try {
-        const requestedAmount = players[userId]?.lastRequestedAmount || 100;
-
-        await ctx.reply('እናመሰግናለን! መረጃው ለአድሚን ተልኳል። እስከሚጸድቅ ድረስ ትንሽ ይጠብቁ።');
-
-        // ለአድሚኑ (ላንተ) መልዕክት ይላካል
-        await bot.telegram.sendMessage(ADMIN_ID, 
-            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n🆔 ID: \`${userId}\`\n💰 መጠን: *${requestedAmount} ETB*\n\n📝 *SMS:* \`${msgText}\``, 
-            {
-                parse_mode: 'Markdown',
-                ...Markup.inlineKeyboard([
-                    [Markup.button.callback(`✅ Approve ${requestedAmount} ETB`, `approve_${userId}_${requestedAmount}`)],
-                    [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
-                ])
-            }
-        );
-    } catch (e) {
-        console.error("Admin Notification Error:", e);
-    }
 });
 
-// --- 5. አድሚን Approve/Cancel ሲያደርግ ---
+// --- 5. ከ WebApp (Send for Verification) የሚመጣ መረጃ ---
+bot.on('web_app_data', async (ctx) => {
+    const userId = ctx.from.id;
+    const data = JSON.parse(ctx.webAppData.data.json()); // ከድረ-ገጹ የመጣው ዳታ
+    const requestedAmount = players[userId]?.lastRequestedAmount || 50;
+
+    await ctx.reply('እናመሰግናለን! መረጃው ለአድሚን ተልኳል። እስከሚጸድቅ ድረስ ትንሽ ይጠብቁ።');
+
+    // ለአድሚኑ (ላንተ) መልዕክት ይላካል
+    await bot.telegram.sendMessage(ADMIN_ID, 
+        `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n🆔 ID: \`${userId}\`\n💰 መጠን: *${requestedAmount} ETB*\n🏦 ባንክ: *${data.bank}*\n\n📝 *SMS:* \`${data.message}\``, 
+        {
+            parse_mode: 'Markdown',
+            ...Markup.inlineKeyboard([
+                [Markup.button.callback(`✅ Approve ${requestedAmount} ETB`, `approve_${userId}_${requestedAmount}`)],
+                [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
+            ])
+        }
+    );
+});
+
+// --- 6. አድሚን Approve/Cancel ሲያደርግ ---
 bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
     const targetUserId = ctx.match[1];
     const amount = parseInt(ctx.match[2]);
@@ -89,27 +88,18 @@ bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
     if (!players[targetUserId]) players[targetUserId] = { balance: 0 };
     players[targetUserId].balance += amount;
 
-    try {
-        await bot.telegram.sendMessage(targetUserId, `✅ ክፍያዎ ተረጋግጧል! *${amount} ETB* ወደ ባላንስዎ ተጨምሯል።`);
-        ctx.answerCbQuery('ተጽድቋል!');
-        return ctx.editMessageText(`✅ ለተጠቃሚ \`${targetUserId}\` *${amount} ETB* ጨምረሃል።`);
-    } catch (err) {
-        console.error(err);
-    }
+    await bot.telegram.sendMessage(targetUserId, `✅ ክፍያዎ ተረጋግጧል! *${amount} ETB* ወደ ባላንስዎ ተጨምሯል።`);
+    ctx.answerCbQuery('ተጽድቋል!');
+    return ctx.editMessageText(`✅ ለተጠቃሚ \`${targetUserId}\` *${amount} ETB* አጽድቀሃል።`);
 });
 
 bot.action(/cancel_(\d+)/, async (ctx) => {
     const targetUserId = ctx.match[1];
-    try {
-        await bot.telegram.sendMessage(targetUserId, `❌ ይቅርታ፣ የላኩት የክፍያ መረጃ ተቀባይነት አላገኘም።`);
-        ctx.answerCbQuery('ተሰርዟል');
-        return ctx.editMessageText(`❌ የID \`${targetUserId}\` ጥያቄ ውድቅ ተደርጓል።`);
-    } catch (err) {
-        console.error(err);
-    }
+    await bot.telegram.sendMessage(targetUserId, `❌ ይቅርታ፣ የላኩት የክፍያ መረጃ ተቀባይነት አላገኘም።`);
+    ctx.answerCbQuery('ተሰርዟል');
+    return ctx.editMessageText(`❌ የID \`${targetUserId}\` ጥያቄ ውድቅ ተደርጓል።`);
 });
 
-// ባላንስ ለማየት
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const balance = players[userId]?.balance || 0;
