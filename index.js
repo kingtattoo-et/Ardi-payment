@@ -2,21 +2,20 @@ const { Telegraf, Markup } = require('telegraf');
 const { createClient } = require('@supabase/supabase-js');
 const express = require('express');
 
-// 1. የ Express Setup
 const app = express();
 const port = process.env.PORT || 10000;
 app.get('/', (req, res) => res.send('Ardi Bingo is LIVE!'));
 app.listen(port, () => console.log(`Health check server listening on port ${port}`));
 
-// 2. የ Supabase Setup
 const supabaseUrl = 'https://avedmreofsmzlrhdxuhq.supabase.co'; 
-const supabaseKey = 'YOUR_SUPABASE_KEY'; // እዚህ ጋር ቁልፍህን አስገባ
+const supabaseKey = 'YOUR_SUPABASE_KEY'; // የአንተን Key እዚህ አስገባ
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 3. የቦት Setup
 const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
 
-// --- Start Menu ---
+// ያንተ የክፍያ ድህረ ገጽ ሊንክ
+const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
+
 bot.start(async (ctx) => {
     try {
         const userId = ctx.from.id;
@@ -37,7 +36,9 @@ bot.start(async (ctx) => {
                 parse_mode: 'Markdown',
                 ...Markup.inlineKeyboard([
                     [Markup.button.callback('🎮 Play Now', 'play')],
-                    [Markup.button.callback('💰 Check Balance', 'balance'), Markup.button.callback('💵 Make a Deposit', 'deposit')],
+                    [Markup.button.callback('💰 Check Balance', 'balance'), 
+                     // እዚህ ጋር ነው ወደ ድህረ ገጽ የሚወስደው በተን የተቀየረው
+                     Markup.button.webApp('💵 Make a Deposit', PAYMENT_WEB_URL)],
                     [Markup.button.callback('Support 📞', 'support'), Markup.button.callback('📕 Instructions', 'instructions')],
                     [Markup.button.callback('✉️ Invite', 'invite'), Markup.button.callback('Win Patterns 🖼', 'patterns')],
                     [Markup.button.callback('👤 Change Username', 'username_change'), Markup.button.callback('🏆 Leaderboard', 'leaderboard')]
@@ -49,43 +50,7 @@ bot.start(async (ctx) => {
     }
 });
 
-// --- Deposit Process (Ende image 1) ---
-bot.action('deposit', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.replyWithMarkdown('`Here are the min you can deposit` \n*Min Amount: 50 ETB*', 
-        Markup.inlineKeyboard([
-            [Markup.button.callback('Manual-Payment', 'manual_payment')]
-        ])
-    );
-});
-
-// --- Manual Payment Options (Ende image 2) ---
-bot.action('manual_payment', (ctx) => {
-    ctx.answerCbQuery();
-    const paymentText = `*Manual Deposit*\n\nSelect your bank to deposit funds`;
-    return ctx.replyWithMarkdown(paymentText, 
-        Markup.inlineKeyboard([
-            [Markup.button.callback('CBE Bank', 'bank_details')],
-            [Markup.button.callback('CBE Birr', 'bank_details')],
-            [Markup.button.callback('Telebirr', 'bank_details')]
-        ])
-    );
-});
-
-// --- Final Bank Details (Ende image 3) ---
-bot.action('bank_details', (ctx) => {
-    ctx.answerCbQuery();
-    const bankInfo = `*Deposit Details*\n\n` +
-        `👤 *Name:* YORDANOS\n` +
-        `💳 *Account:* \`1000277987067\` (Click to copy)\n` +
-        `📱 *Phone:* \`0979429028\`\n\n` +
-        `1. ከላይ ባለው አካውንት ብር ያስገቡ\n` +
-        `2. የደረሰኝ ቁጥር ወይም Screenshot ለ @ArdiiiBingoBot ይላኩ።`;
-    
-    return ctx.replyWithMarkdown(bankInfo);
-});
-
-// --- Other Buttons ---
+// Balance ማሳያ
 bot.action('balance', async (ctx) => {
     try {
         const { data } = await supabase.from('users').select('*').eq('id', ctx.from.id).single();
@@ -100,7 +65,7 @@ bot.action('support', (ctx) => {
     return ctx.reply('📞 ለእርዳታ አድሚኑን ያነጋግሩ፦ @ArdiiiBingoBot');
 });
 
-bot.launch().then(() => console.log("🚀 Ardi Bingo Bot is LIVE with Manual Deposit!"));
+bot.launch().then(() => console.log("🚀 Ardi Bingo Bot is LIVE with Web App Deposit!"));
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
