@@ -22,9 +22,8 @@ function saveToDB() {
 const ADMIN_ID = 1046142540; 
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
-const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg'; // ምስሉ እዚህ ጋር ይሁን
+const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
 
-// መመሪያ ጽሑፍ (Ardi Bingo ተብሎ የተስተካከለ)
 const instructionText = `እንኮን ወደ አርዲ ቢንጎ በሰላም መጡ
 
 1 ለመጫወት ወደቦቱ ሲገቡ register የሚለውን በመንካት ስልክ ቁጥሮትን ያጋሩ
@@ -56,6 +55,7 @@ bot.start((ctx) => {
         players[userId] = { 
             balance: 0, 
             bonus: 0, 
+            gamesPlayed: 0,
             name: ctx.from.first_name, 
             username: ctx.from.username || ctx.from.first_name, 
             phone: null,
@@ -101,23 +101,30 @@ function showMainMenu(ctx) {
     });
 }
 
-// 1. Balance Check (@username ተብሎ የተስተካከለ)
+// 1. የተስተካከለው Balance Check
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const user = players[userId];
+    if (!user) return ctx.answerCbQuery("ተጠቃሚው አልተገኘም");
+    
     const usernameDisplay = user.username.startsWith('@') ? user.username : `@${user.username}`;
     const msg = `<code>Username:     ${usernameDisplay}\nBalance:      ${(user.balance || 0).toFixed(2)} ETB\nbonus:        ${(user.bonus || 0).toFixed(2)}</code>`;
     ctx.answerCbQuery();
     return ctx.replyWithHTML(msg);
 });
 
-// 2. Win Patterns (ምስል እንዲልክ)
+// 2. የተስተካከለው Leaderboard (በምስሉ መሠረት)
+bot.action('leaderboard', (ctx) => {
+    ctx.answerCbQuery();
+    const leaderboardText = `🏅 *Ardi Bingo Leaderboard* 🏅\n\nበወር ውስጥ 50 ጨዋታ እና ከዚያ በላይ ለተጫወቱ ተጫዋቾች የ 10,000 ETB ሽልማት ይዘጋጃል።\n\n*የአሁኑ ተከታታይ ተጫዋቾች ዝርዝር፡*\n_ዝርዝሩ በቅርቡ ይዘመናል..._`;
+    return ctx.replyWithMarkdown(leaderboardText);
+});
+
 bot.action('win_patterns', (ctx) => {
     ctx.answerCbQuery();
     return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { caption: "🏆 *Ardi Bingo Win Patterns*" , parse_mode: 'Markdown'});
 });
 
-// 3. Change Username ተግባር
 bot.action('change_username', (ctx) => {
     const userId = ctx.from.id;
     players[userId].state = 'WAITING_FOR_USERNAME';
@@ -126,7 +133,6 @@ bot.action('change_username', (ctx) => {
     return ctx.reply("📝 እባክዎ አዲሱን Username ያስገቡ (ለምሳሌ፦ Ardi_Player)");
 });
 
-// 4. Support & Invite & Instructions
 bot.action('support', (ctx) => {
     ctx.answerCbQuery();
     return ctx.reply('ማንኛውንም ጥያቄ እዚህ ያቅርቡ፡ @ArdiiiBingoBot');
@@ -148,12 +154,10 @@ bot.action('deposit', (ctx) => {
     return ctx.replyWithMarkdown('`Deposit Amount` \n*Min: 50 ETB*\n\nማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)');
 });
 
-// Text Handling (Username change እና Deposit amount)
 bot.on('text', async (ctx) => {
     const userId = ctx.from.id;
     const msgText = ctx.message.text;
 
-    // Username ለመቀየር ከሆነ
     if (players[userId]?.state === 'WAITING_FOR_USERNAME') {
         players[userId].username = msgText.replace('@', '');
         players[userId].state = null;
@@ -161,7 +165,6 @@ bot.on('text', async (ctx) => {
         return ctx.reply(`✅ Username በትክክል ወደ @${players[userId].username} ተቀይሯል!`);
     }
 
-    // ለ Deposit ከሆነ
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
         players[userId].tempAmount = parseInt(msgText);
         saveToDB();
