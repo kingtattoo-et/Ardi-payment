@@ -82,8 +82,11 @@ bot.on('contact', (ctx) => {
 function showMainMenu(ctx) {
     const userId = ctx.from.id;
     const balance = players[userId].balance || 0;
+    const bonus = players[userId].bonus || 0;
+    const total = balance + bonus;
+
     return ctx.replyWithPhoto({ url: LOGO_URL }, {
-        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${balance} ETB*`,
+        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${total.toFixed(2)} ETB*`,
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
             [Markup.button.callback('🎮 Play Now', 'play')],
@@ -94,6 +97,40 @@ function showMainMenu(ctx) {
         ])
     });
 }
+
+// Play Now (Stake Selection)
+bot.action('play', (ctx) => {
+    const userId = ctx.from.id;
+    const user = players[userId];
+    const totalBalance = (user.balance || 0) + (user.bonus || 0);
+
+    if (totalBalance < 10) {
+        ctx.answerCbQuery();
+        return ctx.reply("⚠️ ለመጫወት በቂ ባላንስ የለዎትም። እባክዎ መጀመሪያ ዲፖዚት ያድርጉ።");
+    }
+
+    ctx.answerCbQuery();
+    return ctx.reply("🕹 *መጫወት የሚፈልጉትን መጠን (Stake) ይምረጡ!*\n\n_ብዙ የተጫወቱ ብዙ ያሸንፉ!!_", {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+            [Markup.button.callback('💰 10 ETB', 'stake_10'), Markup.button.callback('💰 20 ETB', 'stake_20')],
+            [Markup.button.callback('💰 50 ETB', 'stake_50'), Markup.button.callback('💰 100 ETB', 'stake_100')],
+            [Markup.button.callback('⬅️ ተመለስ', 'main_menu')]
+        ])
+    });
+});
+
+// Stake handle (ለአሁኑ መርጠው እንዲቆዩ ብቻ)
+bot.action(/stake_(\d+)/, (ctx) => {
+    const stake = ctx.match[1];
+    ctx.answerCbQuery();
+    return ctx.reply(`✅ የ ${stake} ETB ጨዋታ መርጠዋል። ቀጣዩን የጨዋታ ሂደት በቅርቡ እናሳውቅዎታለን።`);
+});
+
+bot.action('main_menu', (ctx) => {
+    ctx.answerCbQuery();
+    return showMainMenu(ctx);
+});
 
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
@@ -141,7 +178,6 @@ bot.on('text', async (ctx) => {
     const userId = ctx.from.id;
     const msgText = ctx.message.text;
 
-    // Username መቀየር ከሆነ
     if (players[userId]?.state === 'WAITING_FOR_USERNAME') {
         players[userId].username = msgText;
         players[userId].state = null;
@@ -149,7 +185,6 @@ bot.on('text', async (ctx) => {
         return ctx.reply(`✅ መለያ ስምዎ ወደ *${msgText}* ተቀይሯል!`, { parse_mode: 'Markdown' });
     }
 
-    // ለዲፖዚት ቁጥር ከሆነ
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
         players[userId].tempAmount = parseInt(msgText);
         saveToDB();
