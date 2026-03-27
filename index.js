@@ -6,8 +6,10 @@ const app = express();
 app.get('/', (req, res) => res.send('Ardi Bingo is LIVE!'));
 app.listen(process.env.PORT || 10000);
 
+// የቦት ቶከን
 const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
 
+// --- ዳታቤዝ ፋይል አያያዝ ---
 const DB_FILE = './database.json';
 let players = {};
 
@@ -19,7 +21,8 @@ function saveToDB() {
     fs.writeFileSync(DB_FILE, JSON.stringify(players, null, 4));
 }
 
-const ADMIN_ID = 1046142540; 
+// --- ዋና መረጃዎች ---
+const ADMIN_ID = 1046142540; // ያንተ ID
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 
@@ -36,7 +39,7 @@ bot.start((ctx) => {
         return ctx.replyWithMarkdown(`👋 *እንኳን ወደ Ardi Bingo በሰላም መጡ!*\n\nለመቀጠል እባክዎ ከታች ያለውን ቁልፍ ተጭነው ስልክዎን ያጋሩ።`,
             Markup.keyboard([
                 [Markup.button.contactRequest('📲 ስልክ ቁጥርዎን ያጋሩ')]
-            ]).resize()
+            ]).resize().oneTime()
         );
     }
 
@@ -47,6 +50,7 @@ bot.start((ctx) => {
 // ስልክ ቁጥር ሲላክ መቀበያ
 bot.on('contact', (ctx) => {
     const userId = ctx.from.id;
+    // ስልክ ቁጥሩን ይቀበላል
     players[userId].phone = ctx.message.contact.phone_number;
     saveToDB();
     ctx.reply('✅ ተመዝግበዋል!', Markup.removeKeyboard());
@@ -59,22 +63,21 @@ function showMainMenu(ctx) {
     const balance = players[userId].balance || 0;
 
     return ctx.replyWithPhoto({ url: LOGO_URL }, {
-        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስ: *${balance} ETB*`,
+        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${balance} ETB*`,
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
             [Markup.button.callback('🎮 Play Now', 'play')],
             [Markup.button.callback('💰 Check Balance', 'balance'), Markup.button.callback('💵 Make a Deposit', 'deposit')],
-            [Markup.button.callback('📞 Support', 'support'), Markup.button.callback('📖 Instructions', 'rules')],
-            [Markup.button.callback('✉️ Invite', 'invite'), Markup.button.callback('🏆 Win Patterns', 'patterns')],
-            [Markup.button.callback('👤 Change Username', 'change_name'), Markup.button.callback('🏅 Leaderboard', 'leaderboard')]
+            [Markup.button.callback('📞 Support', 'support')],
+            [Markup.button.callback('✉️ Invite', 'invite'), Markup.button.callback('🏅 Leaderboard', 'leaderboard')]
         ])
     });
 }
 
-// --- የዴፖዚት ሂደቶች ---
+// --- የዴፖዚት ሂደት ---
 bot.action('deposit', (ctx) => {
     ctx.answerCbQuery();
-    return ctx.replyWithMarkdown('`Deposit Amount` \n*Min: 50 ETB*\n\nመጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)');
+    return ctx.replyWithMarkdown('`Deposit Amount` \n*Min: 50 ETB*\n\nማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)');
 });
 
 bot.on('text', async (ctx) => {
@@ -93,7 +96,7 @@ bot.on('text', async (ctx) => {
     }
 });
 
-// --- ለአድሚን መላኪያ ---
+// --- ለአድሚን መረጃ መላኪያ ---
 bot.on('web_app_data', async (ctx) => {
     try {
         const userId = ctx.from.id;
@@ -102,14 +105,20 @@ bot.on('web_app_data', async (ctx) => {
 
         await ctx.reply('እናመሰግናለን! መረጃው ለአድሚን ተልኳል።', Markup.removeKeyboard());
 
+        // ለአድሚን (ላንተ) መላክ
         return bot.telegram.sendMessage(ADMIN_ID, 
-            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n📞 ስልክ: ${players[userId].phone}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n\n📝 *SMS:* \`${webData.message}\``, 
-            Markup.inlineKeyboard([
-                [Markup.button.callback(`✅ Approve ${amount} ETB`, `approve_${userId}_${amount}`)],
-                [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
-            ])
+            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n📞 ስልክ: ${players[userId].phone || 'ያልታወቀ'}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n\n📝 *SMS:* \`${webData.message}\``, 
+            {
+                parse_mode: 'Markdown',
+                ...Markup.inlineKeyboard([
+                    [Markup.button.callback(`✅ Approve ${amount} ETB`, `approve_${userId}_${amount}`)],
+                    [Markup.button.callback('❌ Cancel', `cancel_${userId}`)] // የካንሰል ቁልፍ
+                ])
+            }
         );
-    } catch (e) { ctx.reply("ስህተት ተፈጥሯል፣ ድጋሚ ይሞክሩ።"); }
+    } catch (e) {
+        ctx.reply("ስህተት ተፈጥሯል፣ ድጋሚ ይሞክሩ።");
+    }
 });
 
 // --- ባላንስ ማጽደቂያ (Approve) ---
@@ -122,7 +131,16 @@ bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
     saveToDB();
 
     await bot.telegram.sendMessage(targetId, `✅ ክፍያዎ ተረጋግጧል! *${amount} ETB* ባላንስዎ ላይ ተጨምሯል።`);
-    return ctx.editMessageText(`✅ ለ ID ${targetId} *${amount} ETB* አጽድቀሃል። ባላንሱ ተጨምሯል።`);
+    ctx.answerCbQuery('ተጽድቋል!');
+    return ctx.editMessageText(`✅ ለ ID ${targetId} *${amount} ETB* አጽድቀሃል።`);
+});
+
+// --- ክፍያ ውድቅ ማድረጊያ (Cancel) ---
+bot.action(/cancel_(\d+)/, async (ctx) => {
+    const targetId = ctx.match[1];
+    await bot.telegram.sendMessage(targetId, `❌ ክፍያዎ በትክክል ስላልተፈጸመ ውድቅ ተደርጓል።`);
+    ctx.answerCbQuery('ውድቅ ተደርጓል!');
+    return ctx.editMessageText(`❌ የ ID ${targetId} ክፍያ ጥያቄ ውድቅ ተደርጓል።`);
 });
 
 bot.action('balance', (ctx) => {
