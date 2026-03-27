@@ -19,7 +19,6 @@ function saveToDB() {
     fs.writeFileSync(DB_FILE, JSON.stringify(players, null, 4));
 }
 
-// Random 5-digit ID መፍጠሪያ ተግባር
 function generatePlayerId() {
     let newId;
     const existingIds = Object.values(players).map(p => p.playerId).filter(id => id);
@@ -112,22 +111,17 @@ function showMainMenu(ctx) {
     });
 }
 
-// Check Balance (ID undefined እንዳይል ተስተካክሏል)
+// Check Balance (Username ተመልሶ እንዲገባ ተደርጓል)
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     if (!players[userId]) return ctx.answerCbQuery("User profile not found.");
 
-    // ID ከሌለው አዲስ ይፈጥርለታል
-    if (!players[userId].playerId) {
-        players[userId].playerId = generatePlayerId();
-        saveToDB();
-    }
-
     const user = players[userId];
     const b = (user.balance || 0).toFixed(2);
     const bo = (user.bonus || 0).toFixed(2);
+    const uname = user.username.startsWith('@') ? user.username : `@${user.username}`;
     
-    const msg = `<b>User ID:</b> <code>${user.playerId}</code>\n<b>Balance:</b> ${b} ETB\n<b>Bonus:</b> ${bo} ETB`;
+    const msg = `<b>Username:</b> ${uname}\n<b>User ID:</b> <code>${user.playerId || "N/A"}</code>\n<b>Balance:</b> ${b} ETB\n<b>Bonus:</b> ${bo} ETB`;
     
     ctx.answerCbQuery();
     return ctx.replyWithHTML(msg);
@@ -152,11 +146,12 @@ bot.action('leaderboard', (ctx) => {
 bot.action('win_patterns', (ctx) => {
     ctx.answerCbQuery();
     return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { 
-        caption: "🏆 *Ardi Bingo Win Patterns*\n\nእነዚህን ምልክቶች በመዝጋት ማሸነፍ ይችላሉ።", 
+        caption: "🏆 *Ardi Bingo Win Patterns*", 
         parse_mode: 'Markdown' 
     });
 });
 
+// Deposit እንዲሰራ የተስተካከለ
 bot.action('deposit', (ctx) => {
     ctx.answerCbQuery();
     return ctx.replyWithPhoto({ url: CBE_LOGO }, {
@@ -202,6 +197,7 @@ bot.on('text', async (ctx) => {
         return ctx.reply(`✅ Username በትክክል ተቀይሯል!`);
     }
 
+    // ለ Deposit መጠን መቀበያ
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
         players[userId].tempAmount = parseInt(msgText);
         saveToDB();
