@@ -19,8 +19,19 @@ function saveToDB() {
     fs.writeFileSync(DB_FILE, JSON.stringify(players, null, 4));
 }
 
+// Random 5-digit ID መፍጠሪያ
+function generatePlayerId() {
+    let newId;
+    const existingIds = Object.values(players).map(p => p.playerId);
+    do {
+        newId = Math.floor(10000 + Math.random() * 90000).toString();
+    } while (existingIds.includes(newId));
+    return newId;
+}
+
 const ADMIN_ID = 1046142540; 
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
+const CBE_LOGO = 'https://upload.wikimedia.org/wikipedia/en/b/b5/Commercial_Bank_of_Ethiopia_logo.png'; // CBE Logo
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
 
@@ -53,6 +64,7 @@ bot.start((ctx) => {
 
     if (!players[userId]) {
         players[userId] = { 
+            playerId: generatePlayerId(), // 5-digit ID እዚህ ይሰጠዋል
             balance: 0, 
             bonus: 0, 
             gamesPlayed: 0,
@@ -105,17 +117,17 @@ function showMainMenu(ctx) {
     });
 }
 
-// 1. የባላንስ ማሳያ (ተስተካክሏል)
+// 1. Check Balance (Username ወደ User ID ተቀይሯል)
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const user = players[userId];
     if (!user) return ctx.answerCbQuery("User profile not found.");
 
-    const usernameDisplay = user.username.startsWith('@') ? user.username : `@${user.username}`;
     const b = (user.balance || 0).toFixed(2);
     const bo = (user.bonus || 0).toFixed(2);
     
-    const msg = `<b>Username:</b> ${usernameDisplay}\n<b>Balance:</b> ${b} ETB\n<b>Bonus:</b> ${bo} ETB`;
+    // በ @username ፋንታ 5-digit ID እንዲያሳይ ተደርጓል
+    const msg = `<b>User ID:</b> <code>${user.playerId}</code>\n<b>Balance:</b> ${b} ETB\n<b>Bonus:</b> ${bo} ETB`;
     
     ctx.answerCbQuery();
     return ctx.replyWithHTML(msg);
@@ -131,19 +143,28 @@ bot.action('leaderboard', (ctx) => {
     let list = "";
     const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
     sorted.forEach((p, i) => {
-        list += `${medals[i]} @${p.username} - ${p.gamesPlayed || 0} ጨዋታ\n`;
+        list += `${medals[i]} ID: ${p.playerId} - ${p.gamesPlayed || 0} ጨዋታ\n`;
     });
 
     const text = `🏅 *Ardi Bingo Leaderboard* 🏅\n\nበወር ውስጥ 50 ጨዋታ እና ከዚያ በላይ ለተጫወቱ ተጫዋቾች የ 10,000 ETB ሽልማት ይዘጋጃል።\n\n*የደረጃ ሰንጠረዥ:*\n${list || "ተጫዋቾች ገና አልተመዘገቡም"}`;
     return ctx.replyWithMarkdown(text);
 });
 
-// 3. Win Patterns (ምስል ማሳያ ተስተካክሏል)
+// 3. Win Patterns
 bot.action('win_patterns', (ctx) => {
     ctx.answerCbQuery();
     return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { 
         caption: "🏆 *Ardi Bingo Win Patterns*\n\nእነዚህን ምልክቶች በመዝጋት ማሸነፍ ይችላሉ።", 
         parse_mode: 'Markdown' 
+    });
+});
+
+bot.action('deposit', (ctx) => {
+    ctx.answerCbQuery();
+    // CBE Logo እዚህ ጋር እንዲታይ ተደርጓል
+    return ctx.replyWithPhoto({ url: CBE_LOGO }, {
+        caption: '`Deposit Amount` \n*Min: 50 ETB*\n\nማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)',
+        parse_mode: 'Markdown'
     });
 });
 
@@ -173,11 +194,6 @@ bot.action('instructions', (ctx) => {
     return ctx.reply(instructionText);
 });
 
-bot.action('deposit', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.replyWithMarkdown('`Deposit Amount` \n*Min: 50 ETB*\n\nማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)');
-});
-
 bot.on('text', async (ctx) => {
     const userId = ctx.from.id;
     const msgText = ctx.message.text;
@@ -186,7 +202,7 @@ bot.on('text', async (ctx) => {
         players[userId].username = msgText.replace('@', '');
         players[userId].state = null;
         saveToDB();
-        return ctx.reply(`✅ Username በትክክል ወደ @${players[userId].username} ተቀይሯል!`);
+        return ctx.reply(`✅ Username በትክክል ተቀይሯል!`);
     }
 
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
@@ -207,7 +223,7 @@ bot.on('web_app_data', async (ctx) => {
         await ctx.reply('✅ እናመሰግናለን! መረጃው ለአድሚን ተልኳል።', Markup.removeKeyboard());
 
         return bot.telegram.sendMessage(ADMIN_ID, 
-            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n📝 *SMS:* \`${webData.message}\``, 
+            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ ID: ${players[userId].playerId}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n📝 *SMS:* \`${webData.message}\``, 
             {
                 parse_mode: 'Markdown',
                 ...Markup.inlineKeyboard([
