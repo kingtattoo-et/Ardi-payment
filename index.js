@@ -55,6 +55,7 @@ bot.start((ctx) => {
         players[userId] = { 
             balance: 0, 
             bonus: 0, 
+            gamesPlayed: 0,
             name: ctx.from.first_name, 
             username: ctx.from.username || ctx.from.first_name, 
             phone: null,
@@ -86,9 +87,9 @@ bot.on('contact', (ctx) => {
 
 function showMainMenu(ctx) {
     const userId = ctx.from.id;
-    const balance = players[userId].balance || 0;
+    const balance = (players[userId].balance || 0) + (players[userId].bonus || 0);
     return ctx.replyWithPhoto({ url: LOGO_URL }, {
-        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${balance} ETB*`,
+        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${balance.toFixed(2)} ETB*`,
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
             [Markup.button.callback('🎮 Play Now', 'play')],
@@ -100,28 +101,48 @@ function showMainMenu(ctx) {
     });
 }
 
-// 1. Check Balance (Eyesera neber, ahun tustekakloal)
+// 1. የተስተካከለ Balance Check
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const user = players[userId];
     if (!user) return ctx.answerCbQuery("User not found!");
 
     const usernameDisplay = user.username.startsWith('@') ? user.username : `@${user.username}`;
-    const msg = `<code>Username:     ${usernameDisplay}\nBalance:      ${(user.balance || 0).toFixed(2)} ETB\nbonus:        ${(user.bonus || 0).toFixed(2)}</code>`;
+    const totalBalance = (user.balance || 0).toFixed(2);
+    const bonusBalance = (user.bonus || 0).toFixed(2);
+    
+    const msg = `<code>Username:     ${usernameDisplay}\nBalance:      ${totalBalance} ETB\nbonus:        ${bonusBalance}</code>`;
+    
     ctx.answerCbQuery();
     return ctx.replyWithHTML(msg);
 });
 
-// 2. Leaderboard (Be image 1 format tustekakloal)
+// 2. የተስተካከለ Leaderboard (ከ1-5 ደረጃ)
 bot.action('leaderboard', (ctx) => {
     ctx.answerCbQuery();
-    const leaderboardText = `🏅 *Ardi Bingo Leaderboard* 🏅\n\nበወር ውስጥ 50 ጨዋታ እና ከዚያ በላይ ለተጫወቱ ተጫዋቾች የ 10,000 ETB ሽልማት ይዘጋጃል።\n\n*የአሁኑ ተከታታይ ተጫዋቾች ዝርዝር፡*\n_ዝርዝሩ በቅርቡ ይዘመናል..._`;
+    
+    // ተጫዋቾችን በጨዋታ ብዛት መደርደር
+    const sortedPlayers = Object.values(players)
+        .sort((a, b) => (b.gamesPlayed || 0) - (a.gamesPlayed || 0))
+        .slice(0, 5);
+
+    let list = "";
+    sortedPlayers.forEach((p, index) => {
+        const medal = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][index];
+        list += `${medal} @${p.username || p.name} - ${p.gamesPlayed || 0} ጨዋታ\n`;
+    });
+
+    const leaderboardText = `🏅 *Ardi Bingo Leaderboard* 🏅\n\nበወር ውስጥ 50 ጨዋታ እና ከዚያ በላይ ለተጫወቱ ተጫዋቾች የ 10,000 ETB ሽልማት ይዘጋጃል።\n\n*የደረጃ ሰንጠረዥ (Top 5):*\n${list || "_ተጫዋቾች በመጠባበቅ ላይ..._"}\n\nመልካም እድል!`;
     return ctx.replyWithMarkdown(leaderboardText);
 });
 
+// 3. Win Patterns (ምስል ማሳያ)
 bot.action('win_patterns', (ctx) => {
     ctx.answerCbQuery();
-    return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { caption: "🏆 *Ardi Bingo Win Patterns*" , parse_mode: 'Markdown'});
+    return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { 
+        caption: "🏆 *Ardi Bingo Win Patterns*\n\nእነዚህንPatterns በመዝጋት ማሸነፍ ይችላሉ።", 
+        parse_mode: 'Markdown'
+    });
 });
 
 bot.action('change_username', (ctx) => {
