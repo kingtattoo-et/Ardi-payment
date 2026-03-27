@@ -24,7 +24,7 @@ const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.p
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
 
-// የጨዋታው ሊንክ ማስተካከያ (index ፋይልን እንዲያነብ ተደርጓል)
+// ዋናው የጨዋታ ሊንክ (እዚህ ጋር መጨረሻው በ / መለቁን እርግጠኛ ሁን)
 const GAME_URL = 'https://kingtattoo-et.github.io/Ardi-payment/'; 
 
 const instructionText = `እንኮን ወደ አርዲ ቢንጎ መጡ
