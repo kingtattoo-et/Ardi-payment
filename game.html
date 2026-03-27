@@ -3,53 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ardi Bingo - Game</title>
+    <title>Cartela Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #e94560; --secondary: #0f3460; --bg: #1a1a2e; --accent: #16213e; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; margin: 0; padding: 10px; text-align: center; user-select: none; }
-        
-        .header { background: linear-gradient(45deg, var(--accent), var(--primary)); padding: 15px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        
-        /* ካርቴላ መምረጫ ገጽ */
-        .selection-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; max-height: 70vh; overflow-y: auto; }
-        .card-btn { background: var(--accent); padding: 15px 5px; border-radius: 10px; border: 1px solid var(--secondary); cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .card-btn:active { transform: scale(0.9); background: var(--primary); }
+        :root { --primary: #7b1fa2; --secondary: #4a148c; --accent: #ff9800; --bg: #311b92; }
+        body { font-family: 'Arial', sans-serif; background: #2c003e; color: white; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
 
-        /* የቢንጎ መጫወቻ ገጽ */
-        #game-screen { display: none; }
-        .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 380px; margin: 0 auto; background: var(--accent); padding: 10px; border-radius: 15px; }
-        .cell { background-color: var(--secondary); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
-        .cell.marked { background: var(--primary); border-color: white; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        /* Header Style - Image 2 መሰረት */
+        .header-top { background: var(--bg); padding: 10px; display: flex; justify-content: space-around; font-size: 0.7rem; border-bottom: 2px solid var(--accent); }
+        .stat-box { background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 60px; }
+        .logo-area { margin: 15px auto; width: 60px; height: 60px; background: white; border-radius: 50%; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); }
+        .logo-area img { width: 100%; border-radius: 50%; }
 
-        .controls { margin-top: 25px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .btn { background: var(--primary); color: white; border: none; padding: 15px; width: 85%; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
-        .btn-back { background: #555; width: 60%; padding: 10px; }
+        /* ካርቴላ መምረጫ - Image 2 መሰረት */
+        .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 15px; max-height: 60vh; overflow-y: auto; background: rgba(0,0,0,0.3); }
+        .card-select-btn { background: #e67e22; color: white; padding: 12px 5px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; }
+
+        /* ጨዋታ ገጽ - Image 3 መሰረት */
+        #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 360px; margin: 0 auto; border: 5px solid #ef6c00; }
+        .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
+        .letter-box { background: #4caf50; font-size: 1.5rem; font-weight: 900; padding: 5px; border-radius: 5px; color: white; text-shadow: 1px 1px 2px black; }
+        .letter-box.b { background: #4caf50; } .letter-box.i { background: #f44336; } .letter-box.n { background: #ffeb3b; color: #333; } .letter-box.g { background: #2196f3; } .letter-box.o { background: #e91e63; }
+
+        .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; color: #333; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; }
+        .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; box-shadow: inset 0 0 8px rgba(0,0,0,0.3); }
+        .cell.free { background: #8bc34a; font-size: 0.6rem; color: white; display: flex; flex-direction: column; }
+        .cell.free i { font-size: 1.2rem; margin-bottom: 2px; }
+
+        /* ቁልፎች */
+        .action-btns { margin-top: 20px; display: flex; justify-content: center; gap: 15px; }
+        .btn-accept { background: #2e7d32; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1b5e20; }
+        .btn-cancel { background: #ef6c00; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e65100; }
     </style>
 </head>
 <body>
 
     <div id="selection-screen">
-        <div class="header">
-            <h2>🎰 ARDI BINGO 🎰</h2>
-            <p>እባክዎ አንድ ካርቴላ ይምረጡ</p>
+        <div class="header-top">
+            <div class="stat-box">Game<br><b>303397</b></div>
+            <div class="stat-box">Bet<br><b>50 ETB</b></div>
+            <div class="stat-box">Active<br><b>0</b></div>
+            <div class="stat-box">Wallet<br><b>0.00</b></div>
         </div>
-        <div class="selection-grid" id="card-list">
-            </div>
+        <div class="logo-area">
+            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
+        </div>
+        <h3 style="color: #00d2ff;">እባክዎ አንድ ካርቴላ ይምረጡ</h3>
+        <div class="selection-grid" id="card-list"></div>
     </div>
 
     <div id="game-screen">
-        <div class="header">
-            <h2 id="current-card-title">ካርቴላ #</h2>
-            <p>ቁጥሮችን በመንካት ያቅልሙ</p>
-        </div>
-
-        <div class="bingo-grid" id="board">
+        <div class="bingo-card-container">
+            <div class="bingo-header-letters">
+                <div class="letter-box b">B</div>
+                <div class="letter-box i">I</div>
+                <div class="letter-box n">N</div>
+                <div class="letter-box g">G</div>
+                <div class="letter-box o">O</div>
             </div>
-
-        <div class="controls">
-            <button class="btn" onclick="claimBingo()">BINGO! (አሸነፍኩ)</button>
-            <button class="btn btn-back" onclick="location.reload()">ተመለስ</button>
+            <div class="bingo-grid" id="board"></div>
+        </div>
+        <div class="action-btns">
+            <button class="btn-accept" onclick="confirmBingo()">Accept</button>
+            <button class="btn-cancel" onclick="location.reload()">Cancel</button>
         </div>
     </div>
 
@@ -57,11 +78,11 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // 100 ካርቴላዎችን ዝርዝር መፍጠር
+        // 130 ካርቴላዎችን መፍጠር (እንደ Image 2)
         const cardList = document.getElementById('card-list');
-        for (let i = 1; i <= 100; i++) {
-            const btn = document.createElement('div');
-            btn.className = 'card-btn';
+        for (let i = 1; i <= 130; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'card-select-btn';
             btn.innerText = i;
             btn.onclick = () => startGame(i);
             cardList.appendChild(btn);
@@ -70,7 +91,6 @@
         function startGame(num) {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
-            document.getElementById('current-card-title').innerText = "ካርቴላ #" + num;
             createBoard();
         }
 
@@ -78,29 +98,51 @@
             const board = document.getElementById('board');
             board.innerHTML = '';
             
-            // 1-75 ወይም 1-100 ያሉ 25 የተለያዩ ቁጥሮች ማመንጫ
-            const numbers = [];
-            while(numbers.length < 25) {
-                let r = Math.floor(Math.random() * 75) + 1;
-                if(!numbers.includes(r)) numbers.push(r);
+            // የቁጥር አወቃቀር በየረድፉ (Image 3 መሰረት)
+            const ranges = [
+                {min: 1, max: 15},  // B
+                {min: 16, max: 30}, // I
+                {min: 31, max: 45}, // N
+                {min: 46, max: 60}, // G
+                {min: 61, max: 75}  // O
+            ];
+
+            let matrix = [];
+            for(let col=0; col<5; col++) {
+                let colNums = [];
+                while(colNums.length < 5) {
+                    let r = Math.floor(Math.random() * (ranges[col].max - ranges[col].min + 1)) + ranges[col].min;
+                    if(!colNums.includes(r)) colNums.push(r);
+                }
+                matrix.push(colNums);
             }
 
-            numbers.forEach(n => {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.innerText = n;
-                cell.onclick = function() {
-                    this.classList.toggle('marked');
-                    tg.HapticFeedback.impactOccurred('light');
-                };
-                board.appendChild(cell);
-            });
+            // ማሳያ (Rows then Cols)
+            for(let row=0; row<5; row++) {
+                for(let col=0; col<5; col++) {
+                    const cell = document.createElement('div');
+                    
+                    // መሃል ላይ FREE ቦታ (Row 2, Col 2)
+                    if(row === 2 && col === 2) {
+                        cell.className = 'cell free marked';
+                        cell.innerHTML = '<i class="fas fa-star"></i>FREE';
+                    } else {
+                        cell.className = 'cell';
+                        cell.innerText = matrix[col][row];
+                        cell.onclick = function() {
+                            this.classList.toggle('marked');
+                            tg.HapticFeedback.impactOccurred('medium');
+                        };
+                    }
+                    board.appendChild(cell);
+                }
+            }
         }
 
-        function claimBingo() {
-            tg.showConfirm("ቢንጎ ማለታችሁ ተመዝግቧል። ሲስተሙ ካረጋገጠ በኋላ ክፍያ ይፈጸማል?", (ok) => {
+        function confirmBingo() {
+            tg.showConfirm("BINGO ማለታችሁን አረጋግጠዋል?", (ok) => {
                 if(ok) {
-                    tg.sendData("BINGO_CLAIMED");
+                    tg.sendData("BINGO_SUBMITTED");
                     tg.close();
                 }
             });
