@@ -31,7 +31,7 @@ function generatePlayerId() {
 
 const ADMIN_ID = 1046142540; 
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
-const CBE_LOGO = 'https://upload.wikimedia.org/wikipedia/en/b/b5/Commercial_Bank_of_Ethiopia_logo.png'; // CBE Logo
+const CBE_LOGO = 'https://upload.wikimedia.org/wikipedia/en/b/b5/Commercial_Bank_of_Ethiopia_logo.png'; 
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
 
@@ -64,7 +64,7 @@ bot.start((ctx) => {
 
     if (!players[userId]) {
         players[userId] = { 
-            playerId: generatePlayerId(), // 5-digit ID እዚህ ይሰጠዋል
+            playerId: generatePlayerId(),
             balance: 0, 
             bonus: 0, 
             gamesPlayed: 0,
@@ -117,7 +117,6 @@ function showMainMenu(ctx) {
     });
 }
 
-// 1. Check Balance (Username ወደ User ID ተቀይሯል)
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const user = players[userId];
@@ -126,14 +125,12 @@ bot.action('balance', (ctx) => {
     const b = (user.balance || 0).toFixed(2);
     const bo = (user.bonus || 0).toFixed(2);
     
-    // በ @username ፋንታ 5-digit ID እንዲያሳይ ተደርጓል
     const msg = `<b>User ID:</b> <code>${user.playerId}</code>\n<b>Balance:</b> ${b} ETB\n<b>Bonus:</b> ${bo} ETB`;
     
     ctx.answerCbQuery();
     return ctx.replyWithHTML(msg);
 });
 
-// 2. Leaderboard ከ1-5
 bot.action('leaderboard', (ctx) => {
     ctx.answerCbQuery();
     const sorted = Object.values(players)
@@ -150,7 +147,7 @@ bot.action('leaderboard', (ctx) => {
     return ctx.replyWithMarkdown(text);
 });
 
-// 3. Win Patterns
+// Win Pattern እንዲሰራ የተስተካከለ ክፍል
 bot.action('win_patterns', (ctx) => {
     ctx.answerCbQuery();
     return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { 
@@ -159,9 +156,9 @@ bot.action('win_patterns', (ctx) => {
     });
 });
 
+// CBE BANK LOGO የተስተካከለበት መስመር (Deposit ሲነካ እንዲመጣ)
 bot.action('deposit', (ctx) => {
     ctx.answerCbQuery();
-    // CBE Logo እዚህ ጋር እንዲታይ ተደርጓል
     return ctx.replyWithPhoto({ url: CBE_LOGO }, {
         caption: '`Deposit Amount` \n*Min: 50 ETB*\n\nማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)',
         parse_mode: 'Markdown'
