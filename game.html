@@ -3,42 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cartela Bingo</title>
+    <title>Ardi Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #7b1fa2; --secondary: #4a148c; --accent: #ff9800; --bg: #311b92; }
+        :root { --primary: #4a148c; --secondary: #311b92; --accent: #ff9800; --green-active: #4caf50; }
         body { font-family: 'Arial', sans-serif; background: #2c003e; color: white; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
 
-        /* Header Style - Image 2 መሰረት */
-        .header-top { background: var(--bg); padding: 10px; display: flex; justify-content: space-around; font-size: 0.7rem; border-bottom: 2px solid var(--accent); }
-        .stat-box { background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 60px; }
-        .logo-area { margin: 15px auto; width: 60px; height: 60px; background: white; border-radius: 50%; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); }
-        .logo-area img { width: 100%; border-radius: 50%; }
+        /* Header Style */
+        .header-top { background: var(--secondary); padding: 8px; display: flex; justify-content: space-around; font-size: 0.65rem; border-bottom: 2px solid var(--accent); }
+        .stat-box { background: rgba(255,255,255,0.1); padding: 5px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 55px; }
+        
+        /* Dashboard Area (Image 1 & 3 መሰረት) */
+        .dashboard { display: flex; justify-content: center; gap: 15px; margin: 15px 10px; align-items: center; }
+        .derash-container { background: #2e7d32; padding: 10px 20px; border-radius: 12px; border: 3px solid #66bb6a; min-width: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .timer-container { background: #4527a0; padding: 10px; border-radius: 12px; border: 3px solid #7986cb; min-width: 100px; position: relative; }
+        .timer-circle { width: 45px; height: 45px; border: 3px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px; font-weight: bold; font-size: 1.2rem; }
+        
+        .logo-mid { width: 50px; height: 50px; background: white; border-radius: 50%; padding: 3px; box-shadow: 0 0 10px var(--accent); }
 
-        /* ካርቴላ መምረጫ - Image 2 መሰረት */
-        .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 15px; max-height: 60vh; overflow-y: auto; background: rgba(0,0,0,0.3); }
-        .card-select-btn { background: #e67e22; color: white; padding: 12px 5px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; }
+        /* ካርቴላ መምረጫ ግሪድ */
+        .selection-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 15px; margin: 0 10px; max-height: 55vh; overflow-y: auto; }
+        .card-btn { background: #555; color: #ccc; padding: 10px 0; border-radius: 5px; font-weight: bold; font-size: 0.8rem; border: none; cursor: pointer; transition: 0.2s; }
+        .card-btn.active { background: var(--green-active); color: white; box-shadow: 0 0 8px var(--green-active); }
+        .card-btn.sold { background: #b0bec5; color: #78909c; cursor: not-allowed; opacity: 0.6; }
 
-        /* ጨዋታ ገጽ - Image 3 መሰረት */
+        /* ጨዋታ ገጽ */
         #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 360px; margin: 0 auto; border: 5px solid #ef6c00; }
-        .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
-        .letter-box { background: #4caf50; font-size: 1.5rem; font-weight: 900; padding: 5px; border-radius: 5px; color: white; text-shadow: 1px 1px 2px black; }
-        .letter-box.b { background: #4caf50; } .letter-box.i { background: #f44336; } .letter-box.n { background: #ffeb3b; color: #333; } .letter-box.g { background: #2196f3; } .letter-box.o { background: #e91e63; }
-
+        .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; max-width: 350px; margin: 0 auto; border: 5px solid #ef6c00; }
         .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-        .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; color: #333; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; }
-        .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; box-shadow: inset 0 0 8px rgba(0,0,0,0.3); }
-        .cell.free { background: #8bc34a; font-size: 0.6rem; color: white; display: flex; flex-direction: column; }
-        .cell.free i { font-size: 1.2rem; margin-bottom: 2px; }
+        .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; color: #333; border-radius: 5px; border: 1px solid #ddd; }
+        .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; }
+        .cell.free { background: #8bc34a; font-size: 0.6rem; color: white; flex-direction: column; }
 
-        /* ቁልፎች */
-        .action-btns { margin-top: 20px; display: flex; justify-content: center; gap: 15px; }
-        .btn-accept { background: #2e7d32; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1b5e20; }
-        .btn-cancel { background: #ef6c00; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e65100; }
+        .action-btns { margin-top: 15px; display: flex; justify-content: center; gap: 10px; }
+        .btn-green { background: #2e7d32; color: white; border: none; padding: 12px 25px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px #1b5e20; }
+        .btn-orange { background: #ef6c00; color: white; border: none; padding: 12px 25px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px #e65100; }
     </style>
 </head>
 <body>
@@ -50,27 +51,30 @@
             <div class="stat-box">Active<br><b>0</b></div>
             <div class="stat-box">Wallet<br><b>0.00</b></div>
         </div>
-        <div class="logo-area">
-            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
+
+        <div class="dashboard">
+            <div class="derash-container">
+                <span style="font-size: 0.8rem;">ደራሽ</span><br>
+                <b id="derash-amount" style="font-size: 1.2rem;">0 ETB</b>
+            </div>
+            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" class="logo-mid" alt="Logo">
+            <div class="timer-container">
+                <div class="timer-circle" id="timer-display">60</div>
+                <span style="font-size: 0.6rem;">Starting On</span>
+            </div>
         </div>
-        <h3 style="color: #00d2ff;">እባክዎ አንድ ካርቴላ ይምረጡ</h3>
+
         <div class="selection-grid" id="card-list"></div>
+        <p style="font-size: 0.7rem; color: #00d2ff; margin-top: 10px;">እባክዎ ካርቴላ ይግዙ! በ60 ሰከንድ ውስጥ ጨዋታው ይጀምራል።</p>
     </div>
 
     <div id="game-screen">
         <div class="bingo-card-container">
-            <div class="bingo-header-letters">
-                <div class="letter-box b">B</div>
-                <div class="letter-box i">I</div>
-                <div class="letter-box n">N</div>
-                <div class="letter-box g">G</div>
-                <div class="letter-box o">O</div>
-            </div>
             <div class="bingo-grid" id="board"></div>
         </div>
         <div class="action-btns">
-            <button class="btn-accept" onclick="confirmBingo()">Accept</button>
-            <button class="btn-cancel" onclick="location.reload()">Cancel</button>
+            <button class="btn-green" onclick="confirmBingo()">Accept</button>
+            <button class="btn-orange" onclick="location.reload()">Cancel</button>
         </div>
     </div>
 
@@ -78,17 +82,57 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // 130 ካርቴላዎችን መፍጠር (እንደ Image 2)
+        const STAKE = 50;
+        let selectedCards = new Set();
+        let timeLeft = 60;
+
+        // 130 ካርቴላዎችን መፍጠር
         const cardList = document.getElementById('card-list');
         for (let i = 1; i <= 130; i++) {
             const btn = document.createElement('button');
-            btn.className = 'card-select-btn';
+            btn.className = 'card-btn';
             btn.innerText = i;
-            btn.onclick = () => startGame(i);
+            btn.id = `card-${i}`;
+            btn.onclick = () => toggleCard(i);
             cardList.appendChild(btn);
         }
 
-        function startGame(num) {
+        function toggleCard(num) {
+            const btn = document.getElementById(`card-${num}`);
+            if (selectedCards.has(num)) {
+                selectedCards.delete(num);
+                btn.classList.remove('active');
+            } else {
+                selectedCards.add(num);
+                btn.classList.add('active');
+            }
+            updateDerash();
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function updateDerash() {
+            // ደራሽ = ብዛት * 0.85 * Stake
+            const count = selectedCards.size;
+            const totalDerash = Math.floor(count * 0.85 * STAKE);
+            document.getElementById('derash-amount').innerText = `${totalDerash} ETB`;
+        }
+
+        // Timer Function
+        const countdown = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-display').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                if (selectedCards.size > 0) {
+                    startGame();
+                } else {
+                    tg.showAlert("ምንም ካርቴላ አልመረጡም! እባክዎ በድጋሚ ይሞክሩ።");
+                    location.reload();
+                }
+            }
+        }, 1000);
+
+        function startGame() {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             createBoard();
@@ -97,42 +141,26 @@
         function createBoard() {
             const board = document.getElementById('board');
             board.innerHTML = '';
-            
-            // የቁጥር አወቃቀር በየረድፉ (Image 3 መሰረት)
-            const ranges = [
-                {min: 1, max: 15},  // B
-                {min: 16, max: 30}, // I
-                {min: 31, max: 45}, // N
-                {min: 46, max: 60}, // G
-                {min: 61, max: 75}  // O
-            ];
-
+            const ranges = [{min:1,max:15},{min:16,max:30},{min:31,max:45},{min:46,max:60},{min:61,max:75}];
             let matrix = [];
             for(let col=0; col<5; col++) {
                 let colNums = [];
                 while(colNums.length < 5) {
-                    let r = Math.floor(Math.random() * (ranges[col].max - ranges[col].min + 1)) + ranges[col].min;
+                    let r = Math.floor(Math.random()*(ranges[col].max-ranges[col].min+1))+ranges[col].min;
                     if(!colNums.includes(r)) colNums.push(r);
                 }
                 matrix.push(colNums);
             }
-
-            // ማሳያ (Rows then Cols)
             for(let row=0; row<5; row++) {
                 for(let col=0; col<5; col++) {
                     const cell = document.createElement('div');
-                    
-                    // መሃል ላይ FREE ቦታ (Row 2, Col 2)
-                    if(row === 2 && col === 2) {
+                    if(row===2 && col===2) {
                         cell.className = 'cell free marked';
                         cell.innerHTML = '<i class="fas fa-star"></i>FREE';
                     } else {
                         cell.className = 'cell';
                         cell.innerText = matrix[col][row];
-                        cell.onclick = function() {
-                            this.classList.toggle('marked');
-                            tg.HapticFeedback.impactOccurred('medium');
-                        };
+                        cell.onclick = function() { this.classList.toggle('marked'); };
                     }
                     board.appendChild(cell);
                 }
@@ -142,7 +170,7 @@
         function confirmBingo() {
             tg.showConfirm("BINGO ማለታችሁን አረጋግጠዋል?", (ok) => {
                 if(ok) {
-                    tg.sendData("BINGO_SUBMITTED");
+                    tg.sendData(JSON.stringify({action: "BINGO", cards: Array.from(selectedCards)}));
                     tg.close();
                 }
             });
