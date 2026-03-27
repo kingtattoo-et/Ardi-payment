@@ -3,76 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual Deposit</title>
+    <title>Ardi Bingo - Manual Deposit</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary-color: #27ae60; --secondary-color: #2c3e50; --bg-color: #f4f7f6; }
-        body { font-family: sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 400px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: var(--secondary-color); color: white; padding: 20px; text-align: center; }
-        .header img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; margin-bottom: 10px; }
-        .content { padding: 20px; }
-        .bank-item { display: flex; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
-        .bank-item:hover { border-color: var(--primary-color); background: #f9f9f9; }
+        :root { --primary-color: #27ae60; --secondary-color: #2c3e50; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .header { background: var(--secondary-color); color: white; padding: 20px; text-align: center; position: relative; }
+        .header img { width: 60px; border-radius: 50%; border: 3px solid white; margin-bottom: 10px; }
+        .header h2 { margin: 0; font-size: 1.2rem; }
+        .bank-list { padding: 20px; }
+        .bank-item { display: flex; align-items: center; padding: 15px; border: 2px solid #eee; border-radius: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s; }
+        .bank-item:hover { border-color: var(--primary-color); background: #f9fff9; }
         .bank-item img { width: 45px; height: 45px; margin-right: 15px; object-fit: contain; }
-        .bank-info b { display: block; color: var(--secondary-color); font-size: 1.1rem; }
-        .deposit-panel { display: none; text-align: center; }
-        .acc-box { background: #f8fafc; border: 2px dashed var(--primary-color); border-radius: 15px; padding: 15px; margin-bottom: 15px; }
-        textarea { width: 100%; height: 100px; border-radius: 10px; border: 1px solid #ccc; padding: 10px; box-sizing: border-box; margin-bottom: 15px; }
-        .btn-main { background: var(--primary-color); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; }
-        .btn-back { background: none; border: none; color: #888; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; }
+        .bank-info { flex-grow: 1; }
+        .bank-info span { display: block; font-weight: bold; color: var(--secondary-color); }
+        .deposit-panel { padding: 20px; display: none; }
+        .acc-box { background: #f8f9fa; border: 2px dashed var(--primary-color); border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 20px; position: relative; }
+        .acc-box h3 { margin: 0 0 5px 0; color: var(--primary-color); font-size: 1.3rem; }
+        .acc-box p { margin: 0; font-weight: bold; font-size: 1.1rem; color: #333; }
+        .copy-icon { position: absolute; top: 10px; right: 10px; color: var(--primary-color); cursor: pointer; }
+        .instructions { background: #fffde7; border-left: 5px solid #fbc02d; padding: 10px; font-size: 0.9rem; margin-bottom: 20px; text-align: left; }
+        textarea { width: 100%; height: 100px; border-radius: 12px; border: 2px solid #ddd; padding: 12px; box-sizing: border-box; font-size: 1rem; margin-bottom: 15px; outline: none; transition: border-color 0.3s; }
+        textarea:focus { border-color: var(--primary-color); }
+        .btn-send { background: var(--primary-color); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); }
+        .btn-back { background: none; border: none; color: #777; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; }
     </style>
 </head>
 <body>
-<div class="card">
-    <div class="header">
-        <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png">
-        <h2>Manual Deposit</h2>
-    </div>
-    <div class="content">
-        <div id="selectionPage">
-            <p style="text-align:center; color:#666;">ለመቀጠል ባንክ ይምረጡ</p>
-            <div class="bank-item" onclick="openDeposit('CBE Bank', '1000277987067')">
-                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Commercial_Bank_of_Ethiopia_logo.png/220px-Commercial_Bank_of_Ethiopia_logo.png">
-                <div class="bank-info"><b>CBE Bank</b></div>
+    <div class="card">
+        <div class="header">
+            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
+            <h2>Manual Deposit</h2>
+        </div>
+
+        <div id="bankSelection" class="bank-list">
+            <p style="text-align:center; color: #666;">Select your bank to deposit funds</p>
+            <div class="bank-item" onclick="openDeposit('CBE Bank', '1000277987067', 'Yordanos')">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Commercial_Bank_of_Ethiopia_logo.png/220px-Commercial_Bank_of_Ethiopia_logo.png" alt="CBE">
+                <div class="bank-info"><span>CBE Bank</span><small>Commercial Bank of Ethiopia</small></div>
+                <i class="fas fa-chevron-right text-muted"></i>
             </div>
-            <div class="bank-item" onclick="openDeposit('CBE Birr', '0979429028')">
-                <img src="https://kingtattoo-et.github.io/Ardi-payment/cbebirr.png">
-                <div class="bank-info"><b>CBE Birr</b></div>
-            </div>
-            <div class="bank-item" onclick="openDeposit('Telebirr', '0979429028')">
-                <img src="https://kingtattoo-et.github.io/Ardi-payment/telebirr.png">
-                <div class="bank-info"><b>Telebirr</b></div>
+            <div class="bank-item" onclick="openDeposit('Telebirr', '0979429028', 'Yordanos')">
+                <img src="https://vcdn-kinhdoanh.vnecdn.net/2021/05/18/logo-Telebirr-1621312353-9333-1621312411.jpg" alt="Telebirr">
+                <div class="bank-info"><span>Telebirr</span><small>Mobile Money</small></div>
+                <i class="fas fa-chevron-right text-muted"></i>
             </div>
         </div>
-        <div id="depositPage" class="deposit-panel">
-            <button class="btn-back" onclick="location.reload()"><i class="fas fa-arrow-left"></i> ተመለስ</button>
+
+        <div id="depositPanel" class="deposit-panel">
+            <button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-left"></i> &nbsp; ተመለስ</button>
+            <h4 id="displayBankName" style="margin-top:0;"></h4>
+            
             <div class="acc-box">
-                <small>ACCOUNT NAME: <b>Yordanos</b></small>
-                <h3 id="accNumber" style="color:var(--primary-color); margin:10px 0;"></h3>
+                <span id="displayName" style="display:block; font-size: 0.8rem; color: #777;">ACCOUNT NAME</span>
+                <h3 id="displayAccName">Yordanos</h3>
+                <p id="displayAccNum"></p>
+                <i class="fas fa-copy copy-icon" onclick="copyAcc()"></i>
             </div>
-            <textarea id="smsInput" placeholder="የባንክ SMS እዚህ ጋር ፔስት ያድርጉ..."></textarea>
-            <button class="btn-main" onclick="sendToBot()">Send for Verification</button>
+
+            <div class="instructions">
+                1. ከላይ ባለው ቁጥር ብር ያስገቡ።<br>
+                2. የደረሳችሁን የጽሁፍ መልዕክት (SMS) ሙሉውን ኮፒ አድርገው ከታች ባለው ሳጥን ውስጥ ፔስት ያድርጉ።
+            </div>
+
+            <textarea id="smsInput" placeholder="የባንክ SMS እዚህ ጋር ፔስት (Paste) ያድርጉ..."></textarea>
+            <button class="btn-send" onclick="sendData()">Send for Verification</button>
         </div>
     </div>
-</div>
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    let currentBank = "";
-    function openDeposit(bank, acc) {
-        currentBank = bank;
-        document.getElementById('selectionPage').style.display = 'none';
-        document.getElementById('depositPage').style.display = 'block';
-        document.getElementById('accNumber').innerText = acc;
-    }
-    function sendToBot() {
-        const sms = document.getElementById('smsInput').value.trim();
-        if (sms.length < 5) return alert("SMS ያስገቡ!");
-        tg.sendData(JSON.stringify({ bank: currentBank, message: sms }));
-        tg.close();
-    }
-</script>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        let currentBank = "";
+
+        function openDeposit(bank, acc, name) {
+            currentBank = bank;
+            document.getElementById('bankSelection').style.display = 'none';
+            document.getElementById('depositPanel').style.display = 'block';
+            document.getElementById('displayBankName').innerText = bank + " Deposit";
+            document.getElementById('displayAccNum').innerText = acc;
+        }
+
+        function goBack() {
+            document.getElementById('bankSelection').style.display = 'block';
+            document.getElementById('depositPanel').style.display = 'none';
+        }
+
+        function copyAcc() {
+            const accNum = document.getElementById('displayAccNum').innerText;
+            navigator.clipboard.writeText(accNum);
+            tg.showScanQrPopup({ text: "Account Number Copied!" }); // ለሙከራ ያህል
+            setTimeout(() => tg.closeScanQrPopup(), 1000);
+        }
+
+        function sendData() {
+            const sms = document.getElementById('smsInput').value;
+            if (sms.trim().length < 10) {
+                tg.showAlert("እባክዎ ትክክለኛ የባንክ SMS ያስገቡ!");
+                return;
+            }
+            tg.sendData(JSON.stringify({ bank: currentBank, message: sms }));
+            tg.close();
+        }
+    </script>
 </body>
 </html>
