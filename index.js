@@ -78,7 +78,6 @@ bot.on('text', async (ctx) => {
     }
 });
 
-// --- የተስተካከለው የዳታ መቀበያ (Verification Fix) ---
 bot.on('web_app_data', async (ctx) => {
     try {
         const userId = ctx.from.id;
@@ -100,10 +99,11 @@ bot.on('web_app_data', async (ctx) => {
         );
     } catch (e) {
         console.error("Web App Data Error:", e);
-        ctx.reply("⚠️ መረጃውን መቀበል አልተቻለም። እባክዎ በድጋሚ ይሞክሩ።");
+        ctx.reply("⚠️ ስህተት ተፈጥሯል፣ ድጋሚ ይሞክሩ።");
     }
 });
 
+// --- ባላንስ ማጽደቂያ (Approve) ---
 bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
     const targetId = ctx.match[1];
     const amount = parseInt(ctx.match[2]);
@@ -114,10 +114,11 @@ bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
     return ctx.editMessageText(`✅ ለ ID ${targetId} *${amount} ETB* አጽድቀሃል።`);
 });
 
+// --- ክፍያ ውድቅ ማድረጊያ (Cancel - የተስተካከለ) ---
 bot.action(/cancel_(\d+)/, async (ctx) => {
     const targetId = ctx.match[1];
-    await bot.telegram.sendMessage(targetId, `❌ ክፍያዎ በትክክል ስላልተፈጸመ ውድቅ ተደርጓል።`);
-    return ctx.editMessageText(`❌ የ ID ${targetId} ክፍያ ጥያቄ ውድቅ ተደርጓል።`);
+    await bot.telegram.sendMessage(targetId, `❌ ክፍያዎ በትክክል ስላልተፈጸመ ውድቅ ተደርጓል። እባክዎ በትክክለኛ መረጃ ድጋሚ ይሞክሩ።`);
+    return ctx.editMessageText(`❌ የ ID ${targetId} የክፍያ ጥያቄ ውድቅ ተደርጓል።`);
 });
 
 bot.action('balance', (ctx) => {
@@ -125,4 +126,4 @@ bot.action('balance', (ctx) => {
     return ctx.reply(`💰 የአሁኑ ባላንስዎ: *${bal} ETB*`, { parse_mode: 'Markdown' });
 });
 
-bot.launch().then(() => console.log("🚀 ቦቱ ተስተካክሎ ተነስቷል!"));
+bot.launch().then(() => console.log("🚀 ቦቱ በምስሉ መሠረት ተስተካክሎ ተነስቷል!"));
