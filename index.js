@@ -22,8 +22,8 @@ function saveToDB() {
 const ADMIN_ID = 1046142540; 
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
+const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
 
-// መመሪያ ጽሑፍ
 const instructionText = `እንኮን ወደ አርዲ ቢንጎ መጡ
 
 1 ለመጫወት ወደቦቱ ሲገቡ register የሚለውን በመንካት ስልክ ቁጥሮትን ያጋሩ
@@ -40,16 +40,11 @@ const instructionText = `እንኮን ወደ አርዲ ቢንጎ መጡ
 
 5 እነዚህ ማሸነፊያ ቁጥሮች ሳይመጣሎት bingo እሚለውን ከነኩ ከጨዋታው ይባረራሉ
 
-ማሳሰቢያ
-1 የጨዋታ ማስጀመሪያ ሰከንድ (countdown) ሲያልቅ ያሉት ተጫዋች ብዛት ከ2 በታች ከሆነ ያ ጨዋታ አይጀምርም 
-2 ጨዋታ ከጀመረ በህዋላ ካርቴላ መምረጫ ቦርዱ ይፀዳል
-3 እርሶ በዘጉበት ቁጥር ሌላ ተጫዋች ዘግቶ ቀድሞ bingo ካለ አሸናፊነትዋን ያጣሉ
-
 📝ስለሆነም እንዚህን ማሳሰቢያዎች ተመልክተው እንዲጠቀሙበት ካርቴላ ቢንጎ ያሳስባል`;
 
 bot.start((ctx) => {
     const userId = ctx.from.id;
-    const referrerId = ctx.payload; // የጋባዥ ID
+    const referrerId = ctx.payload;
 
     if (!players[userId]) {
         players[userId] = { 
@@ -57,10 +52,10 @@ bot.start((ctx) => {
             bonus: 0, 
             name: ctx.from.first_name, 
             username: ctx.from.username || "User", 
-            phone: null 
+            phone: null,
+            state: null
         };
         
-        // ለጋባዡ 5 ብር ቦነስ መስጠት
         if (referrerId && players[referrerId]) {
             players[referrerId].bonus += 5;
             bot.telegram.sendMessage(referrerId, `🎁 አዲስ ሰው ስለጋበዙ 5 ETB ቦነስ ተጨምሮልዎታል!`);
@@ -93,13 +88,13 @@ function showMainMenu(ctx) {
         ...Markup.inlineKeyboard([
             [Markup.button.callback('🎮 Play Now', 'play')],
             [Markup.button.callback('💰 Check Balance', 'balance'), Markup.button.callback('💵 Make a Deposit', 'deposit')],
-            [Markup.button.callback('📞 Support', 'support'), Markup.button.callback('📕 Instructions', 'instructions')],
-            [Markup.button.callback('✉️ Invite', 'invite'), Markup.button.callback('🏅 Leaderboard', 'leaderboard')]
+            [Markup.button.callback('🏆 Win Patterns', 'win_patterns'), Markup.button.callback('📕 Instructions', 'instructions')],
+            [Markup.button.callback('✉️ Invite', 'invite'), Markup.button.callback('👤 Change Username', 'change_username')],
+            [Markup.button.callback('📞 Support', 'support'), Markup.button.callback('🏅 Leaderboard', 'leaderboard')]
         ])
     });
 }
 
-// 1. የተስተካከለው Balance Check
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const user = players[userId];
@@ -108,20 +103,30 @@ bot.action('balance', (ctx) => {
     return ctx.replyWithHTML(msg);
 });
 
-// 2. Support ክፍል
+bot.action('win_patterns', (ctx) => {
+    ctx.answerCbQuery();
+    return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { caption: "🏆 *Ardi Bingo Win Patterns*\nእነዚህን ምልክቶች በመዝጋት ማሸነፍ ይችላሉ።", parse_mode: 'Markdown' });
+});
+
+bot.action('change_username', (ctx) => {
+    const userId = ctx.from.id;
+    players[userId].state = 'WAITING_FOR_USERNAME';
+    saveToDB();
+    ctx.answerCbQuery();
+    return ctx.reply("📝 እባክዎ አዲሱን መለያ ስም (Username) ያስገቡ፡");
+});
+
 bot.action('support', (ctx) => {
     ctx.answerCbQuery();
     return ctx.reply('ማንኛውንም ጥያቄ እዚህ ያቅርቡ፡ @ArdiiiBingoBot');
 });
 
-// 3. Invite (5 Birr Bonus)
 bot.action('invite', (ctx) => {
     const inviteLink = `https://t.me/${ctx.botInfo.username}?start=${ctx.from.id}`;
     ctx.answerCbQuery();
     return ctx.reply(`✉️ ጓደኞችዎን ይጋብዙ እና በእያንዳንዱ ሰው 5 ብር ቦነስ ያግኙ!\n\nየእርስዎ መጋበዣ ሊንክ፡\n${inviteLink}`);
 });
 
-// 4. Instructions ክፍል
 bot.action('instructions', (ctx) => {
     ctx.answerCbQuery();
     return ctx.reply(instructionText);
@@ -135,6 +140,16 @@ bot.action('deposit', (ctx) => {
 bot.on('text', async (ctx) => {
     const userId = ctx.from.id;
     const msgText = ctx.message.text;
+
+    // Username መቀየር ከሆነ
+    if (players[userId]?.state === 'WAITING_FOR_USERNAME') {
+        players[userId].username = msgText;
+        players[userId].state = null;
+        saveToDB();
+        return ctx.reply(`✅ መለያ ስምዎ ወደ *${msgText}* ተቀይሯል!`, { parse_mode: 'Markdown' });
+    }
+
+    // ለዲፖዚት ቁጥር ከሆነ
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
         players[userId].tempAmount = parseInt(msgText);
         saveToDB();
@@ -154,7 +169,7 @@ bot.on('web_app_data', async (ctx) => {
         await ctx.reply('✅ እናመሰግናለን! መረጃው ለአድሚን ተልኳል።', Markup.removeKeyboard());
 
         return bot.telegram.sendMessage(ADMIN_ID, 
-            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n📞 ስልክ: ${players[userId].phone || 'ያልታወቀ'}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n\n📝 *SMS:* \`${webData.message}\``, 
+            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${players[userId].username || ctx.from.first_name}\n📞 ስልክ: ${players[userId].phone || 'ያልታወቀ'}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n\n📝 *SMS:* \`${webData.message}\``, 
             {
                 parse_mode: 'Markdown',
                 ...Markup.inlineKeyboard([
@@ -164,7 +179,6 @@ bot.on('web_app_data', async (ctx) => {
             }
         );
     } catch (e) {
-        console.error("Web App Data Error:", e);
         ctx.reply("⚠️ ስህተት ተፈጥሯል፣ ድጋሚ ይሞክሩ።");
     }
 });
