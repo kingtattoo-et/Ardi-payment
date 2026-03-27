@@ -66,7 +66,7 @@ bot.start((ctx) => {
             username: username,
             balance: 0.00,
             bonus: 0.00,
-            phone: userphone,
+            phone: null,
             referredBy: referrerId || null
         };
         
