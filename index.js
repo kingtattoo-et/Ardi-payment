@@ -98,19 +98,10 @@ function showMainMenu(ctx) {
     });
 }
 
-// Play Now (Stake Selection)
+// Play Now (Stake Selection) - ባላንስ ባይኖርም ምርጫውን ያመጣል
 bot.action('play', (ctx) => {
-    const userId = ctx.from.id;
-    const user = players[userId];
-    const totalBalance = (user.balance || 0) + (user.bonus || 0);
-
-    if (totalBalance < 10) {
-        ctx.answerCbQuery();
-        return ctx.reply("⚠️ ለመጫወት በቂ ባላንስ የለዎትም። እባክዎ መጀመሪያ ዲፖዚት ያድርጉ።");
-    }
-
     ctx.answerCbQuery();
-    return ctx.reply("🕹 *መጫወት የሚፈልጉትን መጠን (Stake) ይምረጡ!*\n\n_ብዙ የተጫወቱ ብዙ ያሸንፉ!!_", {
+    return ctx.reply("🕹 *መጫወት የሚፈልጉትን መጠን (Stake) ይምረጡ!*\n\n*ብዙ የተጫወቱ ብዙ ያሸንፉ!!*", {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
             [Markup.button.callback('💰 10 ETB', 'stake_10'), Markup.button.callback('💰 20 ETB', 'stake_20')],
@@ -120,11 +111,20 @@ bot.action('play', (ctx) => {
     });
 });
 
-// Stake handle (ለአሁኑ መርጠው እንዲቆዩ ብቻ)
+// Stake handle - እዚህ ጋር ባላንሱን ያረጋግጣል
 bot.action(/stake_(\d+)/, (ctx) => {
-    const stake = ctx.match[1];
+    const stake = parseInt(ctx.match[1]);
+    const userId = ctx.from.id;
+    const user = players[userId];
+    const totalBalance = (user.balance || 0) + (user.bonus || 0);
+
     ctx.answerCbQuery();
-    return ctx.reply(`✅ የ ${stake} ETB ጨዋታ መርጠዋል። ቀጣዩን የጨዋታ ሂደት በቅርቡ እናሳውቅዎታለን።`);
+
+    if (totalBalance < stake) {
+        return ctx.reply("⚠️ ለመጫወት በቂ ባላንስ የለዎትም። እባክዎ መጀመሪያ ዲፖዚት ያድርጉ።");
+    }
+
+    return ctx.reply(`✅ የ ${stake} ETB ጨዋታ መርጠዋል። ወደ ጨዋታው እየወሰድዎት ነው...`);
 });
 
 bot.action('main_menu', (ctx) => {
@@ -234,4 +234,4 @@ bot.action(/cancel_(\d+)/, async (ctx) => {
     return ctx.editMessageText(`❌ የ ID ${targetId} የክፍያ ጥያቄ ውድቅ ተደርጓል።`);
 });
 
-bot.launch().then(() => console.log("🚀 ቦቱ በምስሉ መሠረት ተስተካክሎ ተነስቷል!"));
+bot.launch().then(() => console.log("🚀 ቦቱ ተስተካክሎ ተነስቷል!"));
