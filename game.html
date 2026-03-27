@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ardi Bingo - Select Card</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a2e; color: white; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px; }
+        .card-box { background: #16213e; padding: 15px; border-radius: 10px; border: 1px solid #e94560; cursor: pointer; }
+        .bingo-board { display: none; grid-template-columns: repeat(5, 1fr); gap: 5px; max-width: 300px; margin: 20px auto; }
+        .cell { background: #0f3460; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 5px; }
+        .cell.marked { background: #e94560; }
+    </style>
+</head>
+<body>
+    <div id="selection">
+        <h3>ካርቴላ ይምረጡ (1-100)</h3>
+        <div class="grid" id="list"></div>
+    </div>
+
+    <div id="game" style="display:none;">
+        <h3 id="info">ካርቴላ #</h3>
+        <div class="bingo-board" id="board" style="display:grid;"></div>
+        <button onclick="location.reload()" style="padding:10px; background:#e94560; color:white; border:none; border-radius:5px;">ተመለስ</button>
+    </div>
+
+    <script>
+        const list = document.getElementById('list');
+        for(let i=1; i<=100; i++) {
+            const div = document.createElement('div');
+            div.className = 'card-box';
+            div.innerText = i;
+            div.onclick = () => {
+                document.getElementById('selection').style.display='none';
+                document.getElementById('game').style.display='block';
+                document.getElementById('info').innerText = "ካርቴላ #" + i;
+                start();
+            };
+            list.appendChild(div);
+        }
+
+        function start() {
+            const board = document.getElementById('board');
+            for(let i=0; i<25; i++) {
+                const c = document.createElement('div');
+                c.className = 'cell';
+                c.innerText = Math.floor(Math.random()*100)+1;
+                c.onclick = () => c.classList.toggle('marked');
+                board.appendChild(c);
+            }
+        }
+    </script>
+</body>
+</html>
