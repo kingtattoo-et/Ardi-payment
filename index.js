@@ -55,7 +55,6 @@ bot.start((ctx) => {
         players[userId] = { 
             balance: 0, 
             bonus: 0, 
-            gamesPlayed: 0,
             name: ctx.from.first_name, 
             username: ctx.from.username || ctx.from.first_name, 
             phone: null,
@@ -101,19 +100,19 @@ function showMainMenu(ctx) {
     });
 }
 
-// 1. የተስተካከለው Balance Check
+// 1. Check Balance (Eyesera neber, ahun tustekakloal)
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const user = players[userId];
-    if (!user) return ctx.answerCbQuery("ተጠቃሚው አልተገኘም");
-    
+    if (!user) return ctx.answerCbQuery("User not found!");
+
     const usernameDisplay = user.username.startsWith('@') ? user.username : `@${user.username}`;
     const msg = `<code>Username:     ${usernameDisplay}\nBalance:      ${(user.balance || 0).toFixed(2)} ETB\nbonus:        ${(user.bonus || 0).toFixed(2)}</code>`;
     ctx.answerCbQuery();
     return ctx.replyWithHTML(msg);
 });
 
-// 2. የተስተካከለው Leaderboard (በምስሉ መሠረት)
+// 2. Leaderboard (Be image 1 format tustekakloal)
 bot.action('leaderboard', (ctx) => {
     ctx.answerCbQuery();
     const leaderboardText = `🏅 *Ardi Bingo Leaderboard* 🏅\n\nበወር ውስጥ 50 ጨዋታ እና ከዚያ በላይ ለተጫወቱ ተጫዋቾች የ 10,000 ETB ሽልማት ይዘጋጃል።\n\n*የአሁኑ ተከታታይ ተጫዋቾች ዝርዝር፡*\n_ዝርዝሩ በቅርቡ ይዘመናል..._`;
