@@ -56,8 +56,8 @@ bot.start((ctx) => {
             balance: 0, 
             bonus: 0, 
             gamesPlayed: 0,
-            name: ctx.from.first_name, 
-            username: ctx.from.username || ctx.from.first_name, 
+            name: ctx.from.first_name || "Player", 
+            username: ctx.from.username || ctx.from.first_name || "User", 
             phone: null,
             state: null
         };
@@ -79,17 +79,21 @@ bot.start((ctx) => {
 
 bot.on('contact', (ctx) => {
     const userId = ctx.from.id;
-    players[userId].phone = ctx.message.contact.phone_number;
-    saveToDB();
+    if (players[userId]) {
+        players[userId].phone = ctx.message.contact.phone_number;
+        saveToDB();
+    }
     ctx.reply('✅ ተመዝግበዋል!', Markup.removeKeyboard());
     return showMainMenu(ctx);
 });
 
 function showMainMenu(ctx) {
     const userId = ctx.from.id;
-    const balance = (players[userId].balance || 0) + (players[userId].bonus || 0);
+    const user = players[userId] || { balance: 0, bonus: 0 };
+    const total = (user.balance || 0) + (user.bonus || 0);
+    
     return ctx.replyWithPhoto({ url: LOGO_URL }, {
-        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${balance.toFixed(2)} ETB*`,
+        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${total.toFixed(2)} ETB*`,
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
             [Markup.button.callback('🎮 Play Now', 'play')],
@@ -101,54 +105,54 @@ function showMainMenu(ctx) {
     });
 }
 
-// 1. የተስተካከለ Balance Check
+// 1. የባላንስ ማሳያ (ተስተካክሏል)
 bot.action('balance', (ctx) => {
     const userId = ctx.from.id;
     const user = players[userId];
-    if (!user) return ctx.answerCbQuery("User not found!");
+    if (!user) return ctx.answerCbQuery("User profile not found.");
 
     const usernameDisplay = user.username.startsWith('@') ? user.username : `@${user.username}`;
-    const totalBalance = (user.balance || 0).toFixed(2);
-    const bonusBalance = (user.bonus || 0).toFixed(2);
+    const b = (user.balance || 0).toFixed(2);
+    const bo = (user.bonus || 0).toFixed(2);
     
-    const msg = `<code>Username:     ${usernameDisplay}\nBalance:      ${totalBalance} ETB\nbonus:        ${bonusBalance}</code>`;
+    const msg = `<b>Username:</b> ${usernameDisplay}\n<b>Balance:</b> ${b} ETB\n<b>Bonus:</b> ${bo} ETB`;
     
     ctx.answerCbQuery();
     return ctx.replyWithHTML(msg);
 });
 
-// 2. የተስተካከለ Leaderboard (ከ1-5 ደረጃ)
+// 2. Leaderboard ከ1-5
 bot.action('leaderboard', (ctx) => {
     ctx.answerCbQuery();
-    
-    // ተጫዋቾችን በጨዋታ ብዛት መደርደር
-    const sortedPlayers = Object.values(players)
+    const sorted = Object.values(players)
         .sort((a, b) => (b.gamesPlayed || 0) - (a.gamesPlayed || 0))
         .slice(0, 5);
 
     let list = "";
-    sortedPlayers.forEach((p, index) => {
-        const medal = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][index];
-        list += `${medal} @${p.username || p.name} - ${p.gamesPlayed || 0} ጨዋታ\n`;
+    const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+    sorted.forEach((p, i) => {
+        list += `${medals[i]} @${p.username} - ${p.gamesPlayed || 0} ጨዋታ\n`;
     });
 
-    const leaderboardText = `🏅 *Ardi Bingo Leaderboard* 🏅\n\nበወር ውስጥ 50 ጨዋታ እና ከዚያ በላይ ለተጫወቱ ተጫዋቾች የ 10,000 ETB ሽልማት ይዘጋጃል።\n\n*የደረጃ ሰንጠረዥ (Top 5):*\n${list || "_ተጫዋቾች በመጠባበቅ ላይ..._"}\n\nመልካም እድል!`;
-    return ctx.replyWithMarkdown(leaderboardText);
+    const text = `🏅 *Ardi Bingo Leaderboard* 🏅\n\nበወር ውስጥ 50 ጨዋታ እና ከዚያ በላይ ለተጫወቱ ተጫዋቾች የ 10,000 ETB ሽልማት ይዘጋጃል።\n\n*የደረጃ ሰንጠረዥ:*\n${list || "ተጫዋቾች ገና አልተመዘገቡም"}`;
+    return ctx.replyWithMarkdown(text);
 });
 
-// 3. Win Patterns (ምስል ማሳያ)
+// 3. Win Patterns (ምስል ማሳያ ተስተካክሏል)
 bot.action('win_patterns', (ctx) => {
     ctx.answerCbQuery();
     return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { 
-        caption: "🏆 *Ardi Bingo Win Patterns*\n\nእነዚህንPatterns በመዝጋት ማሸነፍ ይችላሉ።", 
-        parse_mode: 'Markdown'
+        caption: "🏆 *Ardi Bingo Win Patterns*\n\nእነዚህን ምልክቶች በመዝጋት ማሸነፍ ይችላሉ።", 
+        parse_mode: 'Markdown' 
     });
 });
 
 bot.action('change_username', (ctx) => {
     const userId = ctx.from.id;
-    players[userId].state = 'WAITING_FOR_USERNAME';
-    saveToDB();
+    if (players[userId]) {
+        players[userId].state = 'WAITING_FOR_USERNAME';
+        saveToDB();
+    }
     ctx.answerCbQuery();
     return ctx.reply("📝 እባክዎ አዲሱን Username ያስገቡ (ለምሳሌ፦ Ardi_Player)");
 });
@@ -197,18 +201,17 @@ bot.on('text', async (ctx) => {
 bot.on('web_app_data', async (ctx) => {
     try {
         const userId = ctx.from.id;
-        const rawData = ctx.webAppData.data.json();
-        const webData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+        const webData = JSON.parse(ctx.webAppData.data.json());
         const amount = players[userId]?.tempAmount || 50;
 
         await ctx.reply('✅ እናመሰግናለን! መረጃው ለአድሚን ተልኳል።', Markup.removeKeyboard());
 
         return bot.telegram.sendMessage(ADMIN_ID, 
-            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n📞 ስልክ: ${players[userId].phone || 'ያልታወቀ'}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n\n📝 *SMS:* \`${webData.message}\``, 
+            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${ctx.from.first_name}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n📝 *SMS:* \`${webData.message}\``, 
             {
                 parse_mode: 'Markdown',
                 ...Markup.inlineKeyboard([
-                    [Markup.button.callback(`✅ Approve ${amount} ETB`, `approve_${userId}_${amount}`)],
+                    [Markup.button.callback(`✅ Approve ${amount}`, `approve_${userId}_${amount}`)],
                     [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
                 ])
             }
@@ -221,17 +224,18 @@ bot.on('web_app_data', async (ctx) => {
 bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
     const targetId = ctx.match[1];
     const amount = parseInt(ctx.match[2]);
-    if (!players[targetId]) players[targetId] = { balance: 0, bonus: 0 };
-    players[targetId].balance += amount;
-    saveToDB();
-    await bot.telegram.sendMessage(targetId, `✅ ክፍያዎ ተረጋግጧል! *${amount} ETB* ባላንስዎ ላይ ተጨምሯል።`);
-    return ctx.editMessageText(`✅ ለ ID ${targetId} *${amount} ETB* አጽድቀሃል።`);
+    if (players[targetId]) {
+        players[targetId].balance += amount;
+        saveToDB();
+        await bot.telegram.sendMessage(targetId, `✅ ክፍያዎ ተረጋግጧል! *${amount} ETB* ተጨምሯል።`);
+    }
+    return ctx.editMessageText(`✅ ጸድቋል!`);
 });
 
 bot.action(/cancel_(\d+)/, async (ctx) => {
     const targetId = ctx.match[1];
-    await bot.telegram.sendMessage(targetId, `❌ ክፍያዎ በትክክል ስላልተፈጸመ ውድቅ ተደርጓል። እባክዎ በትክክለኛ መረጃ ድጋሚ ይሞክሩ።`);
-    return ctx.editMessageText(`❌ የ ID ${targetId} የክፍያ ጥያቄ ውድቅ ተደርጓል።`);
+    await bot.telegram.sendMessage(targetId, `❌ ክፍያዎ ውድቅ ተደርጓል።`);
+    return ctx.editMessageText(`❌ ውድቅ ተደርጓል።`);
 });
 
 bot.launch().then(() => console.log("🚀 አርዲ ቢንጎ ተስተካክሎ ተነስቷል!"));
