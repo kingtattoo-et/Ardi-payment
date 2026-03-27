@@ -23,6 +23,8 @@ const ADMIN_ID = 1046142540;
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
+// እዚህ ጋር የጨዋታውን ሊንክ ያስገቡ
+const GAME_URL = 'https://kingtattoo-et.github.io/Ardi-payment/game.html'; 
 
 const instructionText = `እንኮን ወደ አርዲ ቢንጎ መጡ
 
@@ -98,33 +100,17 @@ function showMainMenu(ctx) {
     });
 }
 
-// Play Now (Stake Selection) - ባላንስ ባይኖርም ምርጫውን ያመጣል
+// ውርርድ መምረጫ - የተለየ ፎርማት እና ከስር የጨዋታ መግቢያ
 bot.action('play', (ctx) => {
     ctx.answerCbQuery();
-    return ctx.reply("🕹 *መጫወት የሚፈልጉትን መጠን (Stake) ይምረጡ!*\n\n*ብዙ የተጫወቱ ብዙ ያሸንፉ!!*", {
+    return ctx.reply("🕹 *ለመጫወት የሚፈልጉትን የገንዘብ መጠን ይምረጡ!*\n\n*ብዙ የተጫወቱ ብዙ ያሸንፉ!!*", {
         parse_mode: 'Markdown',
         ...Markup.inlineKeyboard([
-            [Markup.button.callback('💰 10 ETB', 'stake_10'), Markup.button.callback('💰 20 ETB', 'stake_20')],
-            [Markup.button.callback('💰 50 ETB', 'stake_50'), Markup.button.callback('💰 100 ETB', 'stake_100')],
-            [Markup.button.callback('⬅️ ተመለስ', 'main_menu')]
+            [Markup.button.webApp('💎 10 Birr', GAME_URL), Markup.button.webApp('💎 20 Birr', GAME_URL)],
+            [Markup.button.webApp('🔥 50 Birr', GAME_URL), Markup.button.webApp('🔥 100 Birr', GAME_URL)],
+            [Markup.button.callback('⬅️ ወደ ዋና ማውጫ', 'main_menu')]
         ])
     });
-});
-
-// Stake handle - እዚህ ጋር ባላንሱን ያረጋግጣል
-bot.action(/stake_(\d+)/, (ctx) => {
-    const stake = parseInt(ctx.match[1]);
-    const userId = ctx.from.id;
-    const user = players[userId];
-    const totalBalance = (user.balance || 0) + (user.bonus || 0);
-
-    ctx.answerCbQuery();
-
-    if (totalBalance < stake) {
-        return ctx.reply("⚠️ ለመጫወት በቂ ባላንስ የለዎትም። እባክዎ መጀመሪያ ዲፖዚት ያድርጉ።");
-    }
-
-    return ctx.reply(`✅ የ ${stake} ETB ጨዋታ መርጠዋል። ወደ ጨዋታው እየወሰድዎት ነው...`);
 });
 
 bot.action('main_menu', (ctx) => {
