@@ -23,8 +23,9 @@ const ADMIN_ID = 1046142540;
 const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
 const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/';
 const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
-// እዚህ ጋር የጨዋታውን ሊንክ ያስገቡ
-const GAME_URL = 'https://kingtattoo-et.github.io/Ardi-payment/game.html'; 
+
+// የጨዋታው ሊንክ ማስተካከያ (index ፋይልን እንዲያነብ ተደርጓል)
+const GAME_URL = 'https://kingtattoo-et.github.io/Ardi-payment/'; 
 
 const instructionText = `እንኮን ወደ አርዲ ቢንጎ መጡ
 
@@ -100,7 +101,6 @@ function showMainMenu(ctx) {
     });
 }
 
-// ውርርድ መምረጫ - የተለየ ፎርማት እና ከስር የጨዋታ መግቢያ
 bot.action('play', (ctx) => {
     ctx.answerCbQuery();
     return ctx.reply("🕹 *ለመጫወት የሚፈልጉትን የገንዘብ መጠን ይምረጡ!*\n\n*ብዙ የተጫወቱ ብዙ ያሸንፉ!!*", {
