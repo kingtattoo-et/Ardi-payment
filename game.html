@@ -94,33 +94,40 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 1. Dynamic Stake/Bet
+        // --- 1. SMART DEPOSIT & WALLET SYNC LOGIC ---
         let currentStake = parseInt(urlParams.get('stake')) || 20;
-
-        // 2. Wallet & Deposit Logic
-        let savedBalance = localStorage.getItem('ardi_balance');
-        let newDeposit = parseFloat(urlParams.get('balance')) || 0;
+        let incomingBalance = parseFloat(urlParams.get('balance')) || 0;
+        let savedBalance = localStorage.getItem('ardi_total_balance');
         
         let walletBalance = 0;
-        if (savedBalance !== null) {
-            walletBalance = parseFloat(savedBalance);
-            // አዲስ ዲፖዚት ከመጣ ከነበረው ጋር እንዲደመር
-            if (newDeposit > 0 && !localStorage.getItem('last_processed_deposit_' + newDeposit)) {
-                walletBalance += newDeposit;
-                localStorage.setItem('last_processed_deposit_' + newDeposit, 'true'); // አንድ ዲፖዚት ደጋግሞ እንዳይደመር
-            }
+
+        if (savedBalance === null) {
+            // ለመጀመሪያ ጊዜ ሲከፈት
+            walletBalance = incomingBalance;
+            localStorage.setItem('ardi_total_balance', walletBalance);
         } else {
-            walletBalance = newDeposit;
+            walletBalance = parseFloat(savedBalance);
+            // አዲስ ዲፖዚት ከመጣና ቀደም ብሎ ካልተደመረ (በዲፖዚት ID ወይም amount ማረጋገጥ ይቻላል)
+            // እዚህ ጋር በ amount እና በ URL በማነጻጸር ዲፖዚቱን እንጨምራለን
+            let lastIncoming = localStorage.getItem('last_incoming_val');
+            if (incomingBalance > 0 && incomingBalance.toString() !== lastIncoming) {
+                walletBalance += incomingBalance;
+                localStorage.setItem('last_incoming_val', incomingBalance);
+                localStorage.setItem('ardi_total_balance', walletBalance);
+            }
+        }
+
+        // --- 2. TIMER PERSISTENCE LOGIC ---
+        let gameStarted = false;
+        let timeLeft = localStorage.getItem('ardi_timer_val');
+        
+        if (timeLeft === null || parseInt(timeLeft) <= 0) {
+            timeLeft = 60;
+        } else {
+            timeLeft = parseInt(timeLeft);
         }
 
         let purchasedCards = 0;
-        let gameStarted = false;
-
-        // 3. Timer Persistence
-        let timeLeft = parseInt(localStorage.getItem('ardi_timer_val'));
-        if (isNaN(timeLeft) || timeLeft <= 0) {
-            timeLeft = 60;
-        }
 
         function updateUI() {
             let derash = purchasedCards * 0.85 * currentStake;
@@ -129,8 +136,8 @@
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('active-count').innerText = gameStarted ? "1" : "0";
             
-            // ባላንሱን ሴቭ ማድረግ
-            localStorage.setItem('ardi_balance', walletBalance);
+            // ሁሌም ዋሌቱን ሴቭ እናደርጋለን
+            localStorage.setItem('ardi_total_balance', walletBalance);
         }
 
         const timerInterval = setInterval(() => {
@@ -141,11 +148,13 @@
             } else if (!gameStarted) {
                 gameStarted = true;
                 document.getElementById('timer-status').innerText = "Running";
-                localStorage.removeItem('ardi_timer_val');
+                // ጨዋታው ሲጀምር ታይመሩን ከሜሞሪ እናጠፋለን ለሚቀጥለው ዙር
+                localStorage.removeItem('ardi_timer_val'); 
                 updateUI();
             }
         }, 1000);
 
+        // ካርቴላዎችን መፍጠር
         const cardList = document.getElementById('card-list');
         for (let i = 1; i <= 130; i++) {
             const btn = document.createElement('button');
@@ -173,7 +182,7 @@
         }
 
         function executePurchase(num) {
-            walletBalance -= currentStake; // ከዋሌት ላይ መቀነስ
+            walletBalance -= currentStake; 
             purchasedCards++;
             document.getElementById('card-' + num).classList.add('purchased');
             
@@ -215,6 +224,7 @@
             }
         }
 
+        // Initialize UI
         updateUI();
     </script>
 </body>
