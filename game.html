@@ -9,41 +9,33 @@
     <style>
         :root { --primary: #7b1fa2; --secondary: #4a148c; --accent: #ff9800; --bg: #311b92; }
         body { font-family: 'Arial', sans-serif; background: #2c003e; color: white; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
-
         .header-top { background: var(--bg); padding: 5px; display: flex; justify-content: space-around; font-size: 0.65rem; border-bottom: 2px solid var(--accent); }
         .stat-box { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 55px; }
-        
         .info-container { display: flex; justify-content: center; gap: 10px; padding: 10px; }
         .derash-box { background: #2e7d32; border: 2px solid #81c784; border-radius: 12px; padding: 10px; width: 140px; }
         .timer-box { background: #4527a0; border: 2px solid #9575cd; border-radius: 12px; padding: 10px; width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .timer-circle { width: 35px; height: 35px; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
-        
         .logo-area { margin: 5px auto; width: 50px; height: 50px; background: white; border-radius: 50%; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); }
         .logo-area img { width: 100%; border-radius: 50%; }
-
         .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 10px; max-height: 55vh; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 0 10px; }
         .card-select-btn { background: #e67e22; color: white; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; transition: 0.2s; }
         .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; cursor: not-allowed; box-shadow: none; }
-
         #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 320px; margin: 40px auto; border: 5px solid #ef6c00; }
         .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
         .letter-box { font-size: 1.4rem; font-weight: 900; padding: 5px; border-radius: 5px; color: white; text-shadow: 1px 1px 2px black; }
         .letter-box.b { background: #4caf50; } .letter-box.i { background: #f44336; } .letter-box.n { background: #ffeb3b; color: #333; } .letter-box.g { background: #2196f3; } .letter-box.o { background: #e91e63; }
-
         .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
         .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; color: #333; border-radius: 4px; border: 1px solid #ddd; }
         .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; }
         .cell.free { background: #4caf50; color: white; font-size: 0.6rem; flex-direction: column; }
-
         .action-btns { margin-top: 15px; display: flex; justify-content: center; gap: 10px; }
         .btn-accept { background: #2e7d32; color: white; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1b5e20; }
         .btn-cancel { background: #ef6c00; color: white; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e65100; }
     </style>
 </head>
 <body>
-
     <div id="selection-screen">
         <div class="header-top">
             <div class="stat-box">Game<br><b id="game-id-display">------</b></div>
@@ -51,7 +43,6 @@
             <div class="stat-box">Active<br><b id="active-count">0</b></div>
             <div class="stat-box">Balance<br><b id="account-balance">0.00</b></div>
         </div>
-
         <div class="info-container">
             <div class="derash-box">
                 <span style="font-size: 0.8rem;">ደራሽ</span><br>
@@ -64,11 +55,7 @@
                 </div>
             </div>
         </div>
-
-        <div class="logo-area">
-            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
-        </div>
-        
+        <div class="logo-area"><img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo"></div>
         <h3 style="color: #00d2ff; margin: 5px; font-size: 1rem;">እባክዎ ካርቴላ ይምረጡ</h3>
         <div class="selection-grid" id="card-list"></div>
     </div>
@@ -96,59 +83,37 @@
         tg.expand();
 
         const urlParams = new URLSearchParams(window.location.search);
-        
-        // 1. Random Game ID መፍጠሪያ
-        const randomGameID = Math.floor(100000 + Math.random() * 900000);
-        document.getElementById('game-id-display').innerText = randomGameID;
 
-        // 2. Bet & Stake ማገናኛ
+        // 1. RANDOM GAME ID
+        const gameID = Math.floor(100000 + Math.random() * 900000);
+        document.getElementById('game-id-display').innerText = gameID;
+
+        // 2. BET/STAKE SYNC (ከቦቱ የመጣውን Stake 10 እዚህ ላይ በትክክል እንዲቀበል)
         let currentStake = parseInt(urlParams.get('stake')) || 20;
 
-        // 4. Balance Logic (Deposit, Win, Withdraw)
-        let incomingBalance = parseFloat(urlParams.get('balance')) || 0;
-        let savedBalance = localStorage.getItem('ardi_account_balance');
-        let currentBalance = 0;
+        // 3. BALANCE SYNC (ከቦቱ የመጣውን Balance 200 እዚህ ላይ በትክክል እንዲቀበል)
+        let currentBalance = parseFloat(urlParams.get('balance')) || 0;
 
-        if (savedBalance === null) {
-            currentBalance = incomingBalance;
-        } else {
-            currentBalance = parseFloat(savedBalance);
-            let lastIn = localStorage.getItem('last_processed_bal_val');
-            if (incomingBalance > 0 && incomingBalance.toString() !== lastIn) {
-                currentBalance += incomingBalance;
-                localStorage.setItem('last_processed_bal_val', incomingBalance);
-            }
-        }
-
-        let purchasedCardsCount = 0;
+        let purchasedCount = 0;
         let gameStarted = false;
 
         function updateUI() {
-            let derash = purchasedCardsCount * 0.85 * currentStake;
-            document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
+            let derash = purchasedCount * 0.85 * currentStake;
+            document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
             document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
-            
-            // 3. Active Logic (ካርቴላ ካለ 1 ካልሆነ 0)
-            document.getElementById('active-count').innerText = purchasedCardsCount > 0 ? "1" : "0";
-            
-            localStorage.setItem('ardi_account_balance', currentBalance);
+            document.getElementById('active-count').innerText = purchasedCount > 0 ? "1" : "0";
         }
 
-        let timeLeft = localStorage.getItem('ardi_timer_val');
-        timeLeft = (timeLeft === null || parseInt(timeLeft) <= 0) ? 60 : parseInt(timeLeft);
-
+        let timeLeft = 60;
         const timerInterval = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
                 document.getElementById('timer-display').innerText = timeLeft;
-                localStorage.setItem('ardi_timer_val', timeLeft);
             } else if (!gameStarted) {
                 gameStarted = true;
                 document.getElementById('timer-status').innerText = "Running";
-                localStorage.removeItem('ardi_timer_val');
-                updateUI();
             }
         }, 1000);
 
@@ -163,12 +128,9 @@
         }
 
         function openPreview(num) {
-            const btn = document.getElementById('card-' + num);
-            if (btn.classList.contains('purchased')) return;
-
+            if (document.getElementById('card-' + num).classList.contains('purchased')) return;
             document.getElementById('game-screen').style.display = 'block';
             createBoard();
-            
             document.getElementById('final-buy-btn').onclick = () => {
                 if (currentBalance >= currentStake) {
                     executePurchase(num);
@@ -179,48 +141,33 @@
         }
 
         function executePurchase(num) {
-            currentBalance -= currentStake; // Balance ሲገዛ ይቀንሳል
-            purchasedCardsCount++;
+            currentBalance -= currentStake;
+            purchasedCount++;
             document.getElementById('card-' + num).classList.add('purchased');
-            
             updateUI();
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentStake, game_id: randomGameID}));
+            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentStake, game: gameID, balance: currentBalance}));
         }
 
-        function closeGameScreen() {
-            document.getElementById('game-screen').style.display = 'none';
-        }
+        function closeGameScreen() { document.getElementById('game-screen').style.display = 'none'; }
 
         function createBoard() {
             const board = document.getElementById('board');
             board.innerHTML = '';
             const ranges = [{min:1,max:15},{min:16,max:30},{min:31,max:45},{min:46,max:60},{min:61,max:75}];
-            let matrix = [];
-            for(let c=0; c<5; c++) {
-                let nums = [];
-                while(nums.length<5){
-                    let r = Math.floor(Math.random()*(ranges[c].max-ranges[c].min+1))+ranges[c].min;
-                    if(!nums.includes(r)) nums.push(r);
-                }
-                matrix.push(nums);
-            }
             for(let r=0; r<5; r++) {
                 for(let c=0; c<5; c++) {
                     const cell = document.createElement('div');
-                    if(r===2 && c===2) {
-                        cell.className = 'cell free marked';
-                        cell.innerHTML = '<i class="fas fa-star"></i>FREE';
-                    } else {
+                    if(r===2 && c===2) { cell.className='cell free marked'; cell.innerHTML='<i class="fas fa-star"></i>FREE'; }
+                    else {
                         cell.className = 'cell';
-                        cell.innerText = matrix[c][r];
+                        cell.innerText = Math.floor(Math.random()*(ranges[c].max-ranges[c].min+1))+ranges[c].min;
                     }
                     board.appendChild(cell);
                 }
             }
         }
-
         updateUI();
     </script>
 </body>
