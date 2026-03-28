@@ -49,7 +49,7 @@
             <div class="stat-box">Game<br><b>303397</b></div>
             <div class="stat-box">Bet<br><b id="bet-display">-- ETB</b></div>
             <div class="stat-box">Active<br><b id="active-count">0</b></div>
-            <div class="stat-box">Wallet<br><b id="wallet-balance">0.00</b></div>
+            <div class="stat-box">Balance<br><b id="account-balance">0.00</b></div>
         </div>
 
         <div class="info-container">
@@ -97,23 +97,23 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 1. Dynamic Stake Connection - ከቦቱ የመጣውን ምርጫ ይቀበላል
+        // 1. የ'stake' እና 'bet' ማስተካከያ (URL Parameter: ?stake=20 ከሆነ Bet: 20 ይሆናል)
         let currentStake = parseInt(urlParams.get('stake')) || 20;
 
-        // 2. Wallet & Smart Balance Sync
+        // 2. የ'balance' ማስተካከያ (URL Parameter: ?balance=200 ከሆነ Balance: 200 ይሆናል)
         let incomingBalance = parseFloat(urlParams.get('balance')) || 0;
-        let savedBalance = localStorage.getItem('ardi_total_balance');
-        
-        let walletBalance = 0;
+        let savedBalance = localStorage.getItem('ardi_account_balance'); // Local Storage key ተቀይሯል
+        let currentBalance = 0;
+
         if (savedBalance === null) {
-            walletBalance = incomingBalance;
+            currentBalance = incomingBalance;
         } else {
-            walletBalance = parseFloat(savedBalance);
-            // አዲስ ዲፖዚት ሲመጣ (Smart Deposit Logic)
-            let lastIn = localStorage.getItem('last_inc_val');
+            currentBalance = parseFloat(savedBalance);
+            let lastIn = localStorage.getItem('last_processed_bal_val'); // Local Storage key ተቀይሯል
+            // ከቦቱ አዲስ ዲፖዚት ሲመጣ ለመጨመር (Smart Sync)
             if (incomingBalance > 0 && incomingBalance.toString() !== lastIn) {
-                walletBalance += incomingBalance;
-                localStorage.setItem('last_inc_val', incomingBalance);
+                currentBalance += incomingBalance;
+                localStorage.setItem('last_processed_bal_val', incomingBalance);
             }
         }
 
@@ -121,23 +121,22 @@
         let gameStarted = false;
 
         function updateUI() {
-            // ደራሽ ስሌት
             let derash = purchasedCards * 0.85 * currentStake;
-            document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
+            document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
             
-            // የባላንስ ማሳያ
-            document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
+            // ማስተካከያ: የ'Balance' መጠን እና የID ስም ተቀይሯል
+            document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
             
-            // የBet መጠን በVariable እንዲሆን ማድረጊያ
+            // ማስተካከያ: የ'Bet' መጠንን ከ'currentStake' ጋር እኩል ማድረግ
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
             
             document.getElementById('active-count').innerText = purchasedCards;
             
-            localStorage.setItem('ardi_total_balance', walletBalance);
+            localStorage.setItem('ardi_account_balance', currentBalance);
         }
 
-        // 3. Timer Logic
+        // 3. ታይመር
         let timeLeft = localStorage.getItem('ardi_timer_val');
         timeLeft = (timeLeft === null || parseInt(timeLeft) <= 0) ? 60 : parseInt(timeLeft);
 
@@ -154,7 +153,7 @@
             }
         }, 1000);
 
-        // ካርቴላዎችን መፍጠር
+        // የካርቴላ ዝርዝር
         const cardList = document.getElementById('card-list');
         for (let i = 1; i <= 130; i++) {
             const btn = document.createElement('button');
@@ -173,7 +172,7 @@
             createBoard();
             
             document.getElementById('final-buy-btn').onclick = () => {
-                if (walletBalance >= currentStake) {
+                if (currentBalance >= currentStake) { // 'currentBalance' ጥቅም ላይ ውሏል
                     executePurchase(num);
                 } else {
                     tg.showAlert("በቂ ሂሳብ የለዎትም!");
@@ -182,21 +181,14 @@
         }
 
         function executePurchase(num) {
-            walletBalance -= currentStake; // ከባላንስ ላይ ይቀንሳል
+            currentBalance -= currentStake; // 'currentBalance' ጥቅም ላይ ውሏል
             purchasedCards++;
             document.getElementById('card-' + num).classList.add('purchased');
             
             updateUI();
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
-            
-            // ለቦቱ መረጃ መላክ
-            tg.sendData(JSON.stringify({
-                action: "buy", 
-                card: num, 
-                amount: currentStake,
-                balance: walletBalance
-            }));
+            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentStake, remaining_balance: currentBalance}));
         }
 
         function closeGameScreen() {
