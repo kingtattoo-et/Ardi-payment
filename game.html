@@ -13,7 +13,7 @@
         .header-top { background: var(--bg); padding: 5px; display: flex; justify-content: space-around; font-size: 0.65rem; border-bottom: 2px solid var(--accent); }
         .stat-box { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 55px; }
         
-        /* Derash & Timer Section - Image 1/3 መሰረት */
+        /* Derash & Timer Section */
         .info-container { display: flex; justify-content: center; gap: 10px; padding: 10px; }
         .derash-box { background: #2e7d32; border: 2px solid #81c784; border-radius: 12px; padding: 10px; width: 140px; }
         .timer-box { background: #4527a0; border: 2px solid #9575cd; border-radius: 12px; padding: 10px; width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -24,25 +24,25 @@
 
         /* ካርቴላ መምረጫ */
         .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 10px; max-height: 55vh; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 0 10px; }
-        .card-select-btn { background: #555; color: #ccc; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: 1px solid #777; cursor: pointer; }
-        .card-select-btn.available { background: #e67e22; color: white; border: none; box-shadow: 0 3px 0 #d35400; }
-        .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; cursor: not-allowed; }
+        .card-select-btn { background: #e67e22; color: white; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; transition: 0.2s; }
+        .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; cursor: not-allowed; box-shadow: none; }
 
         /* ጨዋታ ገጽ */
         #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 340px; margin: 0 auto; border: 5px solid #ef6c00; }
         .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
         .letter-box { font-size: 1.4rem; font-weight: 900; padding: 5px; border-radius: 5px; color: white; text-shadow: 1px 1px 2px black; }
         .letter-box.b { background: #4caf50; } .letter-box.i { background: #f44336; } .letter-box.n { background: #ffeb3b; color: #333; } .letter-box.g { background: #2196f3; } .letter-box.o { background: #e91e63; }
 
         .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-        .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; color: #333; border-radius: 4px; cursor: pointer; }
-        .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; }
+        .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; color: #333; border-radius: 4px; cursor: pointer; border: 1px solid #ddd; }
+        .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; box-shadow: inset 0 0 8px rgba(0,0,0,0.3); }
         .cell.free { background: #8bc34a; font-size: 0.55rem; color: white; flex-direction: column; }
 
         .action-btns { margin-top: 15px; display: flex; justify-content: center; gap: 10px; }
-        .btn-accept { background: #2e7d32; color: white; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 0 #1b5e20; }
-        .btn-cancel { background: #ef6c00; color: white; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 0 #e65100; }
+        .btn-accept { background: #2e7d32; color: white; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1b5e20; }
+        .btn-cancel { background: #ef6c00; color: white; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e65100; }
     </style>
 </head>
 <body>
@@ -50,9 +50,9 @@
     <div id="selection-screen">
         <div class="header-top">
             <div class="stat-box">Game<br><b>303397</b></div>
-            <div class="stat-box">Bet<br><b>50 ETB</b></div>
+            <div class="stat-box">Bet<br><b id="bet-display">50 ETB</b></div>
             <div class="stat-box">Active<br><b id="active-count">0</b></div>
-            <div class="stat-box">Wallet<br><b>0.00</b></div>
+            <div class="stat-box">Wallet<br><b id="wallet-balance">1000.00</b></div>
         </div>
 
         <div class="info-container">
@@ -63,7 +63,7 @@
             <div class="timer-box">
                 <div class="timer-circle" id="timer-display">60</div>
                 <div style="text-align: left; font-size: 0.7rem; line-height: 1;">
-                    <b>ታይመር</b><br>Starting On
+                    <b>ታይመር</b><br><span id="timer-status">Starting On</span>
                 </div>
             </div>
         </div>
@@ -72,7 +72,7 @@
             <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
         </div>
         
-        <p style="font-size: 0.8rem; margin: 5px; color: #00d2ff;">እባክዎ ካርቴላ ይምረጡ፤ በ 60 ሰከንድ ይጀምራል</p>
+        <h3 style="color: #00d2ff; margin: 5px; font-size: 1rem;">እባክዎ ካርቴላ ይምረጡ</h3>
         <div class="selection-grid" id="card-list"></div>
     </div>
 
@@ -96,59 +96,75 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let stake = 50; // የመጫወቻ ብር
+        let stake = 50; // User-selected stake
+        let walletBalance = 1000.00;
         let purchasedCards = 0;
         let timeLeft = 60;
-        let timerStarted = false;
+        let gameStarted = false;
+        let selectedCard = null;
 
-        // ደራሽ ማስያ (Purchased * 0.85 * Stake)
-        function updateDerash() {
-            let total = purchasedCards * 0.85 * stake;
-            document.getElementById('derash-amount').innerText = total.toFixed(0) + " ETB";
-            document.getElementById('active-count').innerText = purchasedCards;
+        // ደራሽ እና ዋሌት ማሳያ
+        function updateStats() {
+            let derash = purchasedCards * 0.85 * stake;
+            document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
+            document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
+            document.getElementById('bet-display').innerText = stake + " ETB";
+            
+            // Active Game logic: 0 if counting, 1 if started
+            document.getElementById('active-count').innerText = gameStarted ? "1" : "0";
         }
 
-        // 130 ካርቴላዎችን መፍጠር
+        // Timer Logic
+        const countdown = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                document.getElementById('timer-display').innerText = timeLeft;
+            } else if (!gameStarted) {
+                gameStarted = true;
+                document.getElementById('timer-status').innerText = "Running";
+                updateStats();
+                if (selectedCard) {
+                    goToGameScreen();
+                }
+            }
+        }, 1000);
+
+        // ካርቴላዎችን መፍጠር (130 ካርቴላዎች)
         const cardList = document.getElementById('card-list');
         for (let i = 1; i <= 130; i++) {
             const btn = document.createElement('button');
-            btn.className = 'card-select-btn available';
+            btn.className = 'card-select-btn';
             btn.innerText = i;
             btn.id = 'card-' + i;
-            btn.onclick = () => buyCard(i);
+            btn.onclick = () => attemptPurchase(i);
             cardList.appendChild(btn);
         }
 
-        function buyCard(num) {
-            const btn = document.getElementById('card-' + num);
-            if(btn.classList.contains('purchased')) return;
-
-            btn.classList.remove('available');
-            btn.classList.add('purchased'); // ወደ አረንጓዴ ይቀየራል
-            purchasedCards++;
-            updateDerash();
-            
-            if(!timerStarted) startTimer();
-
-            // የጨዋታ ገጽ ይከፈታል
-            setTimeout(() => startGame(num), 500);
+        function attemptPurchase(num) {
+            if (walletBalance >= stake) {
+                tg.showConfirm(`ካርቴላ ቁጥር ${num} በ ${stake} ብር ለመግዛት እርግጠኛ ነዎት?`, (ok) => {
+                    if (ok) {
+                        const btn = document.getElementById('card-' + num);
+                        btn.classList.add('purchased');
+                        walletBalance -= stake;
+                        purchasedCards++;
+                        selectedCard = num;
+                        updateStats();
+                        
+                        // ታይመሩ 0 ከሆነ ወዲያውኑ ወደ ጌም ይወስዳል
+                        if (timeLeft === 0) {
+                            goToGameScreen();
+                        } else {
+                            tg.showAlert("ካርቴላ ገዝተዋል። ታይመሩ ሲያልቅ ጨዋታው ይጀምራል።");
+                        }
+                    }
+                });
+            } else {
+                tg.showAlert("በቂ ሂሳብ የለዎትም!");
+            }
         }
 
-        function startTimer() {
-            timerStarted = true;
-            const timerDiv = document.getElementById('timer-display');
-            const countdown = setInterval(() => {
-                timeLeft--;
-                timerDiv.innerText = timeLeft;
-                if(timeLeft <= 0) {
-                    clearInterval(countdown);
-                    timerDiv.innerText = "0";
-                    tg.showAlert("ጨዋታ ተጀምሯል!");
-                }
-            }, 1000);
-        }
-
-        function startGame(num) {
+        function goToGameScreen() {
             document.getElementById('selection-screen').style.display = 'none';
             document.getElementById('game-screen').style.display = 'block';
             createBoard();
@@ -190,11 +206,14 @@
         function confirmBingo() {
             tg.showConfirm("BINGO ማለታችሁን አረጋግጠዋል?", (ok) => {
                 if(ok) {
-                    tg.sendData("BINGO_WINNER");
+                    tg.sendData("BINGO_WINNER_CARD_" + selectedCard);
                     tg.close();
                 }
             });
         }
+
+        // የመጀመሪያ ዋጋዎችን መጫን
+        updateStats();
     </script>
 </body>
 </html>
