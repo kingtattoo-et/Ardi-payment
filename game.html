@@ -25,7 +25,7 @@
         .card-select-btn { background: #e67e22; color: white; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; transition: 0.2s; }
         .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; cursor: not-allowed; box-shadow: none; }
 
-        #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; }
+        #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 320px; margin: 40px auto; border: 5px solid #ef6c00; }
         .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
@@ -92,31 +92,34 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // 1. ዲናሚክ ስቴክ እና ባላንስ ከአርኤል (URL) መሳብ
         const urlParams = new URLSearchParams(window.location.search);
+        let selectedStake = parseInt(urlParams.get('stake')) || 20; 
         
-        // 1. Bet amount based on stake selection
-        let currentBet = parseInt(urlParams.get('stake')) || 20; 
+        // ባላንስን ከLocalStorage መጫን (ሪፍሬሽ ሲደረግ እንዳይጠፋ)
+        let savedWallet = localStorage.getItem('ardi_wallet_balance');
+        let initialBalanceFromURL = parseFloat(urlParams.get('balance')) || 0;
         
-        // 2. Sync Wallet and Balance
-        let initialBalance = parseFloat(urlParams.get('balance')) || 0;
-        let savedBalance = localStorage.getItem('ardi_wallet_balance');
-        let walletBalance = (savedBalance !== null) ? parseFloat(savedBalance) : initialBalance;
+        // ዋሌት ከባላንስ ጋር እኩል እንዲሆን
+        let walletBalance = savedWallet !== null ? parseFloat(savedWallet) : initialBalanceFromURL;
 
         let purchasedCards = 0;
         let gameStarted = false;
 
-        // 3. Timer Persistence: Reload sidereg kakomebet yeketel
-        let savedTimer = localStorage.getItem('ardi_timer_val');
-        let timeLeft = (savedTimer !== null) ? parseInt(savedTimer) : 60;
+        // 2. ታይመር ሪፍሬሽ ቢደረግ ካቆመበት እንዲቀጥል
+        let timeLeft = parseInt(localStorage.getItem('ardi_current_timer'));
+        if (isNaN(timeLeft) || timeLeft <= 0) {
+            timeLeft = 60;
+        }
 
         function updateStats() {
-            let derash = purchasedCards * 0.85 * currentBet;
+            let derash = purchasedCards * 0.85 * selectedStake;
             document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
             document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
-            document.getElementById('bet-display').innerText = currentBet + " ETB";
+            document.getElementById('bet-display').innerText = selectedStake + " ETB";
             document.getElementById('active-count').innerText = gameStarted ? "1" : "0";
             
-            // Save current balance to storage
+            // የዋሌት ሁኔታን ሴቭ ማድረግ
             localStorage.setItem('ardi_wallet_balance', walletBalance);
         }
 
@@ -124,12 +127,13 @@
             if (timeLeft > 0) {
                 timeLeft--;
                 document.getElementById('timer-display').innerText = timeLeft;
-                localStorage.setItem('ardi_timer_val', timeLeft); // Save timer value
+                // ታይመሩን በየሰከንዱ ሴቭ ማድረግ (Persistence)
+                localStorage.setItem('ardi_current_timer', timeLeft);
             } else if (!gameStarted) {
                 gameStarted = true;
                 document.getElementById('timer-status').innerText = "Running";
+                localStorage.removeItem('ardi_current_timer'); // ጨዋታ ሲጀምር ታይመሩን ማጥፋት
                 updateStats();
-                localStorage.removeItem('ardi_timer_val'); // Reset timer storage when game starts
             }
         }, 1000);
 
@@ -151,7 +155,7 @@
             createBoard();
             
             document.getElementById('final-buy-btn').onclick = () => {
-                if (walletBalance >= currentBet) {
+                if (walletBalance >= selectedStake) {
                     confirmPurchase(num);
                 } else {
                     tg.showAlert("በቂ ሂሳብ የለዎትም!");
@@ -160,7 +164,7 @@
         }
 
         function confirmPurchase(num) {
-            walletBalance -= currentBet; 
+            walletBalance -= selectedStake; 
             purchasedCards++;
             const btn = document.getElementById('card-' + num);
             btn.classList.add('purchased');
@@ -169,7 +173,7 @@
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
             
-            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentBet}));
+            tg.sendData(JSON.stringify({action: "buy", card: num, amount: selectedStake}));
         }
 
         function closeGameScreen() {
@@ -204,7 +208,6 @@
             }
         }
 
-        // Initialize display
         updateStats();
     </script>
 </body>
