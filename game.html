@@ -49,7 +49,7 @@
             <div class="stat-box">Game<br><b id="game-id-display">------</b></div>
             <div class="stat-box">Bet<br><b id="bet-display">-- ETB</b></div>
             <div class="stat-box">Active<br><b id="active-count">0</b></div>
-            <div class="stat-box">Balance<br><b id="account-balance">0.00</b></div>
+            <div class="stat-box">Wallet<br><b id="wallet-balance">0.00</b></div>
         </div>
 
         <div class="info-container">
@@ -97,47 +97,58 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 1. Random Game ID መፍጠሪያ
-        const randomGameID = Math.floor(100000 + Math.random() * 900000);
-        document.getElementById('game-id-display').innerText = randomGameID;
+        // --- 1. Game ID Logic ---
+        let gameID = localStorage.getItem('ardi_game_id');
+        if (!gameID) {
+            gameID = Math.floor(100000 + Math.random() * 900000);
+            localStorage.setItem('ardi_game_id', gameID);
+        }
+        document.getElementById('game-id-display').innerText = gameID;
 
-        // 2. Bet & Stake ማገናኛ
+        // --- 2. Bet/Stake Logic ---
         let currentStake = parseInt(urlParams.get('stake')) || 20;
 
-        // 4. Balance Logic (Deposit, Win, Withdraw)
+        // --- 4. Wallet & Deposit/Withdraw Logic ---
         let incomingBalance = parseFloat(urlParams.get('balance')) || 0;
-        let savedBalance = localStorage.getItem('ardi_account_balance');
-        let currentBalance = 0;
+        let withdrawAmount = parseFloat(urlParams.get('withdraw')) || 0;
+        let winAmount = parseFloat(urlParams.get('win')) || 0;
+        let savedBalance = localStorage.getItem('ardi_total_balance');
+        
+        let walletBalance = savedBalance !== null ? parseFloat(savedBalance) : 0;
 
-        if (savedBalance === null) {
-            currentBalance = incomingBalance;
-        } else {
-            currentBalance = parseFloat(savedBalance);
-            let lastIn = localStorage.getItem('last_processed_bal_val');
-            if (incomingBalance > 0 && incomingBalance.toString() !== lastIn) {
-                currentBalance += incomingBalance;
-                localStorage.setItem('last_processed_bal_val', incomingBalance);
-            }
+        // Smart Logic for Deposit/Withdraw/Win
+        if (incomingBalance > 0 && localStorage.getItem('last_dep') != incomingBalance) {
+            walletBalance += incomingBalance;
+            localStorage.setItem('last_dep', incomingBalance);
+        }
+        if (withdrawAmount > 0 && localStorage.getItem('last_with') != withdrawAmount) {
+            walletBalance -= withdrawAmount;
+            localStorage.setItem('last_with', withdrawAmount);
+        }
+        if (winAmount > 0 && localStorage.getItem('last_win') != winAmount) {
+            walletBalance += winAmount;
+            localStorage.setItem('last_win', winAmount);
         }
 
-        let purchasedCardsCount = 0;
+        // --- 3. Timer & Active Logic ---
         let gameStarted = false;
+        let timeLeft = localStorage.getItem('ardi_timer_val');
+        timeLeft = (timeLeft === null || parseInt(timeLeft) <= 0) ? 60 : parseInt(timeLeft);
+
+        let purchasedCards = 0;
 
         function updateUI() {
-            let derash = purchasedCardsCount * 0.85 * currentStake;
+            let derash = purchasedCards * 0.85 * currentStake;
             document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
-            document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
+            document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
             
-            // 3. Active Logic (ካርቴላ ካለ 1 ካልሆነ 0)
-            document.getElementById('active-count').innerText = purchasedCardsCount > 0 ? "1" : "0";
+            // Active count logic: 1 only if timer reaches 0
+            document.getElementById('active-count').innerText = gameStarted ? "1" : "0";
             
-            localStorage.setItem('ardi_account_balance', currentBalance);
+            localStorage.setItem('ardi_total_balance', walletBalance);
         }
-
-        let timeLeft = localStorage.getItem('ardi_timer_val');
-        timeLeft = (timeLeft === null || parseInt(timeLeft) <= 0) ? 60 : parseInt(timeLeft);
 
         const timerInterval = setInterval(() => {
             if (timeLeft > 0) {
@@ -147,6 +158,7 @@
             } else if (!gameStarted) {
                 gameStarted = true;
                 document.getElementById('timer-status').innerText = "Running";
+                // Generate new Game ID for next cycle later
                 localStorage.removeItem('ardi_timer_val');
                 updateUI();
             }
@@ -163,6 +175,10 @@
         }
 
         function openPreview(num) {
+            if (gameStarted) {
+                tg.showAlert("ጨዋታ ተጀምሯል! ለሚቀጥለው ዙር ይጠብቁ።");
+                return;
+            }
             const btn = document.getElementById('card-' + num);
             if (btn.classList.contains('purchased')) return;
 
@@ -170,7 +186,7 @@
             createBoard();
             
             document.getElementById('final-buy-btn').onclick = () => {
-                if (currentBalance >= currentStake) {
+                if (walletBalance >= currentStake) {
                     executePurchase(num);
                 } else {
                     tg.showAlert("በቂ ሂሳብ የለዎትም!");
@@ -179,14 +195,13 @@
         }
 
         function executePurchase(num) {
-            currentBalance -= currentStake; // Balance ሲገዛ ይቀንሳል
-            purchasedCardsCount++;
+            walletBalance -= currentStake; // Decrease on purchase
+            purchasedCards++;
             document.getElementById('card-' + num).classList.add('purchased');
-            
             updateUI();
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentStake, game_id: randomGameID}));
+            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentStake, game: gameID}));
         }
 
         function closeGameScreen() {
