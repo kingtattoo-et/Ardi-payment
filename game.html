@@ -97,24 +97,23 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 1. የStake (የብር መጠን) አያያዝ
+        // 1. Dynamic Stake Connection - ከቦቱ የመጣውን ምርጫ ይቀበላል
         let currentStake = parseInt(urlParams.get('stake')) || 20;
 
-        // 2. የWallet እና የዲፖዚት logic
+        // 2. Wallet & Smart Balance Sync
         let incomingBalance = parseFloat(urlParams.get('balance')) || 0;
         let savedBalance = localStorage.getItem('ardi_total_balance');
+        
         let walletBalance = 0;
-
-        // የድሮ ባላንስ ካለ እሱን ይጠቀማል፣ ከሌለ አዲሱን ከURL የመጣውን
         if (savedBalance === null) {
             walletBalance = incomingBalance;
         } else {
             walletBalance = parseFloat(savedBalance);
-            // አዲስ ዲፖዚት ሲመጣ ለመጨመር (Smart Deposit Logic)
-            let lastProcessedBalance = localStorage.getItem('last_processed_bal');
-            if (incomingBalance > 0 && incomingBalance.toString() !== lastProcessedBalance) {
+            // አዲስ ዲፖዚት ሲመጣ (Smart Deposit Logic)
+            let lastIn = localStorage.getItem('last_inc_val');
+            if (incomingBalance > 0 && incomingBalance.toString() !== lastIn) {
                 walletBalance += incomingBalance;
-                localStorage.setItem('last_processed_bal', incomingBalance);
+                localStorage.setItem('last_inc_val', incomingBalance);
             }
         }
 
@@ -122,38 +121,40 @@
         let gameStarted = false;
 
         function updateUI() {
-            // ደራሽ ስሌት (85% return assumption)
+            // ደራሽ ስሌት
             let derash = purchasedCards * 0.85 * currentStake;
             document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
             
-            // የዋሌት መጠን ማሳያ
+            // የባላንስ ማሳያ
             document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
             
-            // የጨዋታው Bet መጠን ማሳያ
+            // የBet መጠን በVariable እንዲሆን ማድረጊያ
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
             
             document.getElementById('active-count').innerText = purchasedCards;
             
-            // ባላንሱን በLocal Storage ማስቀመጥ
             localStorage.setItem('ardi_total_balance', walletBalance);
         }
 
-        // 3. ታይመር logic
-        let timeLeft = parseInt(localStorage.getItem('ardi_timer_val')) || 60;
+        // 3. Timer Logic
+        let timeLeft = localStorage.getItem('ardi_timer_val');
+        timeLeft = (timeLeft === null || parseInt(timeLeft) <= 0) ? 60 : parseInt(timeLeft);
+
         const timerInterval = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
                 document.getElementById('timer-display').innerText = timeLeft;
                 localStorage.setItem('ardi_timer_val', timeLeft);
-            } else {
+            } else if (!gameStarted) {
                 gameStarted = true;
                 document.getElementById('timer-status').innerText = "Running";
-                clearInterval(timerInterval);
+                localStorage.removeItem('ardi_timer_val');
+                updateUI();
             }
         }, 1000);
 
-        // የካርቴላ ዝርዝር መፍጠሪያ
+        // ካርቴላዎችን መፍጠር
         const cardList = document.getElementById('card-list');
         for (let i = 1; i <= 130; i++) {
             const btn = document.createElement('button');
@@ -175,13 +176,13 @@
                 if (walletBalance >= currentStake) {
                     executePurchase(num);
                 } else {
-                    tg.showAlert("በቂ ሂሳብ የለዎትም! እባክዎ ዲፖዚት ያድርጉ።");
+                    tg.showAlert("በቂ ሂሳብ የለዎትም!");
                 }
             };
         }
 
         function executePurchase(num) {
-            walletBalance -= currentStake; // ብር መቀነስ
+            walletBalance -= currentStake; // ከባላንስ ላይ ይቀንሳል
             purchasedCards++;
             document.getElementById('card-' + num).classList.add('purchased');
             
@@ -194,7 +195,7 @@
                 action: "buy", 
                 card: num, 
                 amount: currentStake,
-                remaining_balance: walletBalance
+                balance: walletBalance
             }));
         }
 
