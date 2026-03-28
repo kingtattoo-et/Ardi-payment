@@ -36,6 +36,7 @@
     </style>
 </head>
 <body>
+
     <div id="selection-screen">
         <div class="header-top">
             <div class="stat-box">Game<br><b id="game-id-display">------</b></div>
@@ -43,6 +44,7 @@
             <div class="stat-box">Active<br><b id="active-count">0</b></div>
             <div class="stat-box">Balance<br><b id="account-balance">0.00</b></div>
         </div>
+
         <div class="info-container">
             <div class="derash-box">
                 <span style="font-size: 0.8rem;">ደራሽ</span><br>
@@ -55,7 +57,11 @@
                 </div>
             </div>
         </div>
-        <div class="logo-area"><img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo"></div>
+
+        <div class="logo-area">
+            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
+        </div>
+        
         <h3 style="color: #00d2ff; margin: 5px; font-size: 1rem;">እባክዎ ካርቴላ ይምረጡ</h3>
         <div class="selection-grid" id="card-list"></div>
     </div>
@@ -83,16 +89,30 @@
         tg.expand();
 
         const urlParams = new URLSearchParams(window.location.search);
-
-        // 1. RANDOM GAME ID
+        
+        // 1. Random Game ID
         const gameID = Math.floor(100000 + Math.random() * 900000);
         document.getElementById('game-id-display').innerText = gameID;
 
-        // 2. BET/STAKE SYNC (ከቦቱ የመጣውን Stake 10 እዚህ ላይ በትክክል እንዲቀበል)
+        // 2. Bet/Stake Sync - ከቦቱ የመጣውን Stake (ለምሳሌ 10) ይቀበላል
         let currentStake = parseInt(urlParams.get('stake')) || 20;
 
-        // 3. BALANCE SYNC (ከቦቱ የመጣውን Balance 200 እዚህ ላይ በትክክል እንዲቀበል)
-        let currentBalance = parseFloat(urlParams.get('balance')) || 0;
+        // 3. Balance Sync - ከቦቱ የመጣውን Balance (ለምሳሌ 200) ይቀበላል
+        let incomingBalance = parseFloat(urlParams.get('balance')) || 0;
+        let savedBalance = localStorage.getItem('ardi_live_balance');
+        let currentBalance = 0;
+
+        if (savedBalance === null) {
+            currentBalance = incomingBalance;
+        } else {
+            currentBalance = parseFloat(savedBalance);
+            // አዲስ ዲፖዚት ሲመጣ ለማዘመን
+            let lastIn = localStorage.getItem('last_sync_bal');
+            if (incomingBalance > 0 && incomingBalance.toString() !== lastIn) {
+                currentBalance = incomingBalance; // በቀጥታ ከቦቱ የመጣውን እኩል ያደርገዋል
+                localStorage.setItem('last_sync_bal', incomingBalance);
+            }
+        }
 
         let purchasedCount = 0;
         let gameStarted = false;
@@ -100,10 +120,15 @@
         function updateUI() {
             let derash = purchasedCount * 0.85 * currentStake;
             document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
+            
+            // የባላንስ ማሳያውን እዚህ እናስተካክላለን
             document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
+            
             document.getElementById('active-count').innerText = purchasedCount > 0 ? "1" : "0";
+            
+            localStorage.setItem('ardi_live_balance', currentBalance);
         }
 
         let timeLeft = 60;
