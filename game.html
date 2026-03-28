@@ -25,7 +25,7 @@
         .card-select-btn { background: #e67e22; color: white; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; transition: 0.2s; }
         .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; cursor: not-allowed; box-shadow: none; }
 
-        #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; }
+        #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 320px; margin: 40px auto; border: 5px solid #ef6c00; }
         .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
@@ -92,28 +92,41 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ስቴክን ከዩቲው መጠየቂያ ቦት ለማንበብ (Default 20)
+        // 1. ሂሳብ መደመር logic (Deposit persist)
         const urlParams = new URLSearchParams(window.location.search);
-        let stake = parseInt(urlParams.get('stake')) || 20; 
-        let walletBalance = parseFloat(urlParams.get('balance')) || 0.00; // ዋሌትን ከዳታቤዝ ጋር ማመሳሰል
+        let currentBet = parseInt(urlParams.get('stake')) || 20; // Bet based on stake selection
         
-        let purchasedCards = 0;
-        let timeLeft = 60;
-        let gameStarted = false;
-        let currentTempCard = null;
-
-        function updateStats() {
-            let derash = purchasedCards * 0.85 * stake;
-            document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
-            document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
-            document.getElementById('bet-display').innerText = stake + " ETB";
-            document.getElementById('active-count').innerText = gameStarted ? "1" : "0";
+        // Wallet logic: Load from storage or URL
+        let savedBalance = parseFloat(localStorage.getItem('ardi_wallet'));
+        let urlBalance = parseFloat(urlParams.get('balance')) || 0;
+        
+        // አዲስ ዲፖዚት ሲመጣ ከነበረው ጋር እንዲደመር
+        let walletBalance = isNaN(savedBalance) ? urlBalance : savedBalance;
+        if (!isNaN(urlBalance) && urlBalance > 0 && urlBalance !== savedBalance) {
+            walletBalance += urlBalance; 
         }
 
+        let purchasedCards = 0;
+        let timeLeft = parseInt(localStorage.getItem('ardi_timer')) || 60;
+        let gameStarted = false;
+
+        function updateStats() {
+            let derash = purchasedCards * 0.85 * currentBet;
+            document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
+            document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
+            document.getElementById('bet-display').innerText = currentBet + " ETB";
+            document.getElementById('active-count').innerText = gameStarted ? "1" : "0";
+            
+            // Save state to survive refresh
+            localStorage.setItem('ardi_wallet', walletBalance);
+        }
+
+        // 2. Timer refresh bihon mnm endayekenese
         const countdown = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
                 document.getElementById('timer-display').innerText = timeLeft;
+                localStorage.setItem('ardi_timer', timeLeft);
             } else if (!gameStarted) {
                 gameStarted = true;
                 document.getElementById('timer-status').innerText = "Running";
@@ -131,17 +144,15 @@
             cardList.appendChild(btn);
         }
 
-        // ካርቴላ ሲነካ image 2 እንዲመጣ
         function openPurchasePreview(num) {
             const btn = document.getElementById('card-' + num);
             if (btn.classList.contains('purchased')) return;
 
-            currentTempCard = num;
             document.getElementById('game-screen').style.display = 'block';
             createBoard();
             
             document.getElementById('final-buy-btn').onclick = () => {
-                if (walletBalance >= stake) {
+                if (walletBalance >= currentBet) {
                     confirmPurchase(num);
                 } else {
                     tg.showAlert("በቂ ሂሳብ የለዎትም!");
@@ -150,17 +161,24 @@
         }
 
         function confirmPurchase(num) {
-            walletBalance -= stake; // balance endikese
+            // 3. Card sigezu endikenese
+            walletBalance -= currentBet; 
             purchasedCards++;
             const btn = document.getElementById('card-' + num);
-            btn.classList.add('purchased'); // cardu green endihon
+            btn.classList.add('purchased');
             
             updateStats();
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
             
-            // ሰርቨር ላይ እንዲመዘገብ ዳታ መላክ
-            tg.sendData(JSON.stringify({action: "buy", card: num, amount: stake}));
+            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentBet}));
+        }
+
+        // 4. Win siyareg endichemer (Logic triggered by server/bot)
+        function processWin(winAmount) {
+            walletBalance += winAmount;
+            updateStats();
+            tg.showAlert("እንኳን ደስ አለዎት! " + winAmount + " ETB አሸንፈዋል!");
         }
 
         function closeGameScreen() {
@@ -180,7 +198,6 @@
                 }
                 matrix.push(nums);
             }
-
             for(let r=0; r<5; r++) {
                 for(let c=0; c<5; c++) {
                     const cell = document.createElement('div');
