@@ -94,11 +94,11 @@
         const gameID = Math.floor(100000 + Math.random() * 900000);
         document.getElementById('game-id-display').innerText = gameID;
 
-        // 2. Stake Sync
+        // 2. Bet/Stake Sync - ከቦቱ የመጣውን Stake በቀጥታ ይወስዳል
         let currentStake = parseInt(urlParams.get('stake')) || 20;
 
-        // 3. Balance Sync - ቦቱ ላይ ያለውን ባላንስ በቀጥታ ይወስዳል
-        let currentBalance = parseFloat(urlParams.get('balance')) || 0;
+        // 3. Balance Sync - ቦቱ ላይ ያለውን ባላንስ (ለምሳሌ 500.00 ETB) በቀጥታ ሚኒ አፑ ላይ ካለው ጋር ያገናኛል
+        let currentBalance = parseFloat(urlParams.get('balance')) || 0.00;
 
         let purchasedCount = 0;
         let gameStarted = false;
@@ -107,11 +107,12 @@
             let derash = purchasedCount * 0.85 * currentStake;
             document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
             
-            // ባላንሱን ማሳያ
+            // ባላንሱን ከቦቱ ጋር እኩል ያደርገዋል
             document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
             
+            // ካርቴላ ሲገዛ አክቲቭ 1 ይሆናል
             document.getElementById('active-count').innerText = purchasedCount > 0 ? "1" : "0";
         }
 
@@ -150,20 +151,20 @@
         }
 
         function executePurchase(num) {
-            currentBalance -= currentStake;
+            currentBalance -= currentStake; // ካርቴላ ሲገዛ ከባላንስ ይቀንሳል
             purchasedCount++;
             document.getElementById('card-' + num).classList.add('purchased');
             updateUI();
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
             
-            // መረጃውን ለቦቱ መላክ - ቦቱ ላይም እንዲቀንስ
+            // መረጃውን ለቦቱ መላክ
             tg.sendData(JSON.stringify({
                 action: "buy", 
                 card: num, 
                 amount: currentStake, 
                 game: gameID,
-                new_balance: currentBalance
+                balance: currentBalance
             }));
         }
 
