@@ -94,25 +94,11 @@
         const gameID = Math.floor(100000 + Math.random() * 900000);
         document.getElementById('game-id-display').innerText = gameID;
 
-        // 2. Bet/Stake Sync - ከቦቱ የመጣውን Stake (ለምሳሌ 10) ይቀበላል
+        // 2. Stake Sync
         let currentStake = parseInt(urlParams.get('stake')) || 20;
 
-        // 3. Balance Sync - ከቦቱ የመጣውን Balance (ለምሳሌ 200) ይቀበላል
-        let incomingBalance = parseFloat(urlParams.get('balance')) || 0;
-        let savedBalance = localStorage.getItem('ardi_live_balance');
-        let currentBalance = 0;
-
-        if (savedBalance === null) {
-            currentBalance = incomingBalance;
-        } else {
-            currentBalance = parseFloat(savedBalance);
-            // አዲስ ዲፖዚት ሲመጣ ለማዘመን
-            let lastIn = localStorage.getItem('last_sync_bal');
-            if (incomingBalance > 0 && incomingBalance.toString() !== lastIn) {
-                currentBalance = incomingBalance; // በቀጥታ ከቦቱ የመጣውን እኩል ያደርገዋል
-                localStorage.setItem('last_sync_bal', incomingBalance);
-            }
-        }
+        // 3. Balance Sync - ቦቱ ላይ ያለውን ባላንስ በቀጥታ ይወስዳል
+        let currentBalance = parseFloat(urlParams.get('balance')) || 0;
 
         let purchasedCount = 0;
         let gameStarted = false;
@@ -121,14 +107,12 @@
             let derash = purchasedCount * 0.85 * currentStake;
             document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
             
-            // የባላንስ ማሳያውን እዚህ እናስተካክላለን
+            // ባላንሱን ማሳያ
             document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
             
             document.getElementById('active-count').innerText = purchasedCount > 0 ? "1" : "0";
-            
-            localStorage.setItem('ardi_live_balance', currentBalance);
         }
 
         let timeLeft = 60;
@@ -172,7 +156,15 @@
             updateUI();
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({action: "buy", card: num, amount: currentStake, game: gameID, balance: currentBalance}));
+            
+            // መረጃውን ለቦቱ መላክ - ቦቱ ላይም እንዲቀንስ
+            tg.sendData(JSON.stringify({
+                action: "buy", 
+                card: num, 
+                amount: currentStake, 
+                game: gameID,
+                new_balance: currentBalance
+            }));
         }
 
         function closeGameScreen() { document.getElementById('game-screen').style.display = 'none'; }
