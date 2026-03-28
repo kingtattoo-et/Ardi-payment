@@ -97,20 +97,21 @@
         // --- 1. Wallet & Deposit Logic (አዲስ ብር ሲጨመር እንዲደምር) ---
         let urlBalance = parseFloat(urlParams.get('balance')) || 0;
         let savedBalance = localStorage.getItem('ardi_wallet');
-        let lastUrlBalance = parseFloat(localStorage.getItem('last_url_val') || 0);
+        let lastKnownUrlBalance = parseFloat(localStorage.getItem('last_url_val') || 0);
         
         let walletBalance;
         if (savedBalance === null) {
+            // ገጹ ለመጀመሪያ ጊዜ ሲከፈት ከቦቱ የመጣውን ተጠቀም
             walletBalance = urlBalance;
         } else {
             walletBalance = parseFloat(savedBalance);
-            // አዲስ ዲፖዚት ከመጣ ልዩነቱን ጨምር
-            if (urlBalance > lastUrlBalance) {
-                walletBalance += (urlBalance - lastUrlBalance);
+            // ቦቱ ላይ አዲስ ዲፖዚት ተደርጎ ከሆነ (ለምሳሌ ከ 200 ወደ 500 ካደገ) ልዩነቱን ጨምር
+            if (urlBalance > lastKnownUrlBalance) {
+                walletBalance += (urlBalance - lastKnownUrlBalance);
             }
         }
         
-        // ዳታውን ለሪፍሬሽ እንዲሆን ሴቭ አድርግ
+        // ዳታውን ለቀጣይ ሪፍሬሽ እንዲሆን ሴቭ አድርግ
         localStorage.setItem('ardi_wallet', walletBalance);
         localStorage.setItem('last_url_val', urlBalance);
 
@@ -131,7 +132,7 @@
             document.getElementById('bet-display').innerText = stake + " ETB";
             document.getElementById('active-count').innerText = purchasedCards;
             
-            // ሴቭ አድርግ
+            // ሁልጊዜ ለውጥ ሲኖር ሴቭ አድርግ
             localStorage.setItem('ardi_wallet', walletBalance);
             localStorage.setItem('ardi_active_cards', purchasedCards);
         }
@@ -181,7 +182,7 @@
         }
 
         function confirmPurchase(num) {
-            walletBalance -= stake; // ሂሳብ ቀንስ
+            walletBalance -= stake; // እዚህ ጋር ነው ሂሳብ የሚቀንሰው
             purchasedCards++;
             
             const btn = document.getElementById('card-' + num);
@@ -233,7 +234,7 @@
             }
         }
 
-        updateStats();
+        updateStats(); // ገጹ ሲከፈት ባላንሱን ወዲያው እንዲያሳይ
     </script>
 </body>
 </html>
