@@ -3,118 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ardi Bingo - Stake Selection</title>
+    <title>Ardi Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #311b92; --accent: #ff9800; --bg: #2c003e; --blue-timer: #00d2ff; --red-win: #ff5252; }
-        body { font-family: 'Arial', sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
+        :root { --primary: #311b92; --accent: #ff9800; --bg: #2c003e; --blue: #00d2ff; --red: #ff5252; }
+        body { font-family: 'Arial', sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; text-align: center; }
         
-        .header-top { background: var(--primary); padding: 10px; display: flex; justify-content: space-around; border-bottom: 2px solid var(--accent); position: sticky; top: 0; z-index: 100; }
-        .stat-box { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 10px; border: 1px solid var(--blue-timer); }
+        /* Top Balance Bar */
+        .balance-header { background: var(--primary); padding: 15px; border-bottom: 2px solid var(--accent); font-weight: bold; font-size: 1.1rem; }
+        .balance-header b { color: var(--blue); }
 
-        /* Stake List Styles (Image 1) */
-        .stake-container { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .stake-card { background: #4527a0; border-radius: 15px; padding: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,0.1); }
-        .stake-info { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-        .stake-amt { font-size: 1.2rem; font-weight: bold; color: var(--accent); }
-        
-        /* Circles for Win and Timer */
-        .indicator-row { display: flex; gap: 8px; margin-top: 5px; }
-        .circle-win { background: var(--red-win); width: 50px; height: 25px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; border: 1px solid white; }
-        .circle-timer { background: var(--blue-timer); width: 45px; height: 25px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; border: 1px solid white; color: black; }
+        /* Stake Selection View (Image 1) */
+        #stake-view { padding: 20px; }
+        .main-title { font-size: 1.5rem; margin: 20px 0; color: white; font-weight: bold; }
+        .stake-list { display: flex; flex-direction: column; gap: 12px; padding: 10px; }
+        .stake-option { background: #4527a0; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        .stake-option:active { background: #5e35b1; }
+        .stake-option span { font-size: 1.3rem; font-weight: bold; color: var(--accent); }
+        .select-txt { background: #2e7d32; padding: 8px 20px; border-radius: 8px; font-size: 0.9rem; }
 
-        .join-btn { background: #2e7d32; color: white; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1b5e20; }
-        .join-btn:active { transform: translateY(2px); box-shadow: none; }
+        /* Card Selection View (Image 2) */
+        #card-view { display: none; padding: 10px; }
+        .game-info-bar { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; margin-bottom: 15px; }
+        .info-item { display: flex; flex-direction: column; gap: 5px; }
+        .circle { width: 60px; height: 30px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; border: 1px solid white; }
+        .blue-c { background: var(--blue); color: black; }
+        .red-c { background: var(--red); color: white; }
 
-        /* Card Selection (Image 2 & 3) */
-        #card-selection-section { display: none; padding: 10px; animation: fadeIn 0.4s; }
-        .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 10px; max-height: 50vh; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 15px; }
-        .card-num-btn { background: #e67e22; color: white; padding: 15px 5px; border-radius: 8px; font-weight: bold; border: none; font-size: 1rem; box-shadow: 0 4px 0 #d35400; }
-        .card-num-btn.purchased { background: #2e7d32 !important; border: 2px solid #afffbc !important; box-shadow: none; }
+        .card-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-height: 60vh; overflow-y: auto; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 15px; }
+        .card-btn { background: #e67e22; color: white; padding: 15px 5px; border-radius: 8px; border: none; font-weight: bold; box-shadow: 0 4px 0 #d35400; }
+        .card-btn.selected { background: #2e7d32; box-shadow: none; border: 2px solid #afffbc; }
 
-        /* Preview Modal (Image 3) */
-        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
-        .preview-content { background: #ffcc80; padding: 20px; border-radius: 20px; width: 85%; max-width: 300px; border: 6px solid #ef6c00; }
-        .bingo-preview-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 10px; }
-        .p-cell { background: white; aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; font-size: 0.9rem; }
-        .p-cell.star { background: #4caf50; color: white; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Preview Modal */
+        #preview-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-box { background: #ffcc80; padding: 20px; border-radius: 20px; width: 85%; max-width: 300px; color: #333; }
+        .bingo-preview { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 10px; }
+        .cell { background: white; aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <div id="main-view">
-        <div class="header-top">
-            <div class="stat-box">Balance: <b id="wallet-bal">0.00</b></div>
-            <div class="stat-box">ID: <b id="game-id">--</b></div>
-        </div>
+    <div class="balance-header">Balance: <b id="balance-display">0.00</b> ETB</div>
 
-        <div class="stake-container" id="stake-view">
-            <h2 style="font-size: 1.1rem; color: var(--blue-timer);">Stake ይምረጡ</h2>
-            
-            <div class="stake-card">
-                <div class="stake-info">
-                    <span class="stake-amt">10 ETB</span>
-                    <div class="indicator-row">
-                        <div class="circle-win">8.5 ETB</div>
-                        <div class="circle-timer" id="timer-10">60</div>
-                    </div>
-                </div>
-                <button class="join-btn" onclick="goToCards(10, 60)">Join</button>
+    <div id="stake-view">
+        <div class="main-title">በትልቁ መደብ ይምረጡ</div>
+        <div class="stake-list">
+            <div class="stake-option" onclick="startCardSelection(10)">
+                <span>10 Birr</span> <div class="select-txt">ምረጥ</div>
             </div>
-
-            <div class="stake-card">
-                <div class="stake-info">
-                    <span class="stake-amt">20 ETB</span>
-                    <div class="indicator-row">
-                        <div class="circle-win">17 ETB</div>
-                        <div class="circle-timer" id="timer-20">45</div>
-                    </div>
-                </div>
-                <button class="join-btn" onclick="goToCards(20, 45)">Join</button>
+            <div class="stake-option" onclick="startCardSelection(20)">
+                <span>20 Birr</span> <div class="select-txt">ምረጥ</div>
             </div>
-
-            <div class="stake-card">
-                <div class="stake-info">
-                    <span class="stake-amt">50 ETB</span>
-                    <div class="indicator-row">
-                        <div class="circle-win">42.5 ETB</div>
-                        <div class="circle-timer" id="timer-50">30</div>
-                    </div>
-                </div>
-                <button class="join-btn" onclick="goToCards(50, 30)">Join</button>
+            <div class="stake-option" onclick="startCardSelection(50)">
+                <span>50 Birr</span> <div class="select-txt">ምረጥ</div>
             </div>
-
-            <div class="stake-card">
-                <div class="stake-info">
-                    <span class="stake-amt">100 ETB</span>
-                    <div class="indicator-row">
-                        <div class="circle-win">85 ETB</div>
-                        <div class="circle-timer" id="timer-100">20</div>
-                    </div>
-                </div>
-                <button class="join-btn" onclick="goToCards(100, 20)">Join</button>
+            <div class="stake-option" onclick="startCardSelection(100)">
+                <span>100 Birr</span> <div class="select-txt">ምረጥ</div>
             </div>
-        </div>
-
-        <div id="card-selection-section">
-            <div style="padding: 10px; background: var(--primary); margin-bottom: 10px;">
-                <span id="active-timer" class="circle-timer" style="display:inline-flex; width: 60px;">0</span>
-                <b style="margin-left: 10px;">ካርቴላ ይምረጡ (<span id="active-stake">0</span> ETB)</b>
-            </div>
-            <div class="selection-grid" id="card-grid"></div>
         </div>
     </div>
 
+    <div id="card-view">
+        <div class="game-info-bar">
+            <div class="info-item">
+                <span>Timer</span>
+                <div class="circle blue-c" id="game-timer">60</div>
+            </div>
+            <div class="info-item">
+                <span>ደራሽ</span>
+                <div class="circle red-c" id="derash-display">0</div>
+            </div>
+        </div>
+        <div class="card-grid" id="grid-container"></div>
+    </div>
+
     <div id="preview-modal">
-        <div class="preview-content">
-            <h3 style="color: #333; margin: 0;">ካርቴላ #<span id="target-card">0</span></h3>
-            <div class="bingo-preview-grid" id="preview-grid"></div>
-            <div style="margin-top: 15px; display: flex; gap: 10px;">
+        <div class="modal-box">
+            <h3 id="modal-title">ካርቴላ #0</h3>
+            <div class="bingo-preview" id="preview-grid"></div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
                 <button onclick="buyCard()" style="flex:1; background:#2e7d32; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">Accept</button>
-                <button onclick="closePreview()" style="flex:1; background:#ef6c00; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">Cancel</button>
+                <button onclick="closeModal()" style="flex:1; background:#ef6c00; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">Cancel</button>
             </div>
         </div>
     </div>
@@ -124,97 +94,86 @@
         tg.expand();
         const urlParams = new URLSearchParams(window.location.search);
 
-        let currentBalance = parseFloat(urlParams.get('balance')) || 0.00;
+        let balance = parseFloat(urlParams.get('balance')) || 0.00;
         let selectedStake = 0;
-        let mainTimer = 0;
-        let purchasedCard = null;
-        let timerActive = false;
+        let timerValue = 60;
+        let purchasedCardNum = null;
 
-        document.getElementById('wallet-bal').innerText = currentBalance.toFixed(2);
-        document.getElementById('game-id').innerText = Math.floor(Math.random()*90000);
+        document.getElementById('balance-display').innerText = balance.toFixed(2);
 
-        // 1. Go to Card Selection
-        function goToCards(amt, time) {
+        // ወደ Image 2 መሸጋገሪያ
+        function startCardSelection(amt) {
             selectedStake = amt;
-            mainTimer = time;
             document.getElementById('stake-view').style.display = 'none';
-            document.getElementById('card-selection-section').style.display = 'block';
-            document.getElementById('active-stake').innerText = amt;
-            document.getElementById('active-timer').innerText = time;
+            document.getElementById('card-view').style.display = 'block';
+            document.getElementById('derash-display').innerText = Math.floor(amt * 0.85);
             
-            if(!timerActive) startCountdown();
-            generateCardGrid();
+            generateGrid();
+            startTimer();
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        // 2. Timer Logic
-        function startCountdown() {
-            timerActive = true;
-            const tLoop = setInterval(() => {
-                if(mainTimer > 0) {
-                    mainTimer--;
-                    document.getElementById('active-timer').innerText = mainTimer;
-                    // Update main list timers too
-                    const tDisplay = document.getElementById('timer-' + selectedStake);
-                    if(tDisplay) tDisplay.innerText = mainTimer;
+        // 150 ካርቴላዎችን መፍጠር
+        function generateGrid() {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+            for(let i=1; i<=150; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'card-btn';
+                btn.innerText = i;
+                btn.id = 'card-' + i;
+                btn.onclick = () => openPreview(i);
+                container.appendChild(btn);
+            }
+        }
+
+        function startTimer() {
+            const t = setInterval(() => {
+                if(timerValue > 0) {
+                    timerValue--;
+                    document.getElementById('game-timer').innerText = timerValue;
                 } else {
-                    clearInterval(tLoop);
-                    if(purchasedCard) {
-                        const win = Math.floor(selectedStake * 0.85);
-                        window.location.href = `game_call.html?card=${purchasedCard}&stake=${selectedStake}&derash=${win}&balance=${currentBalance}`;
+                    clearInterval(t);
+                    if(purchasedCardNum) {
+                        window.location.href = `game_call.html?card=${purchasedCardNum}&stake=${selectedStake}&derash=${Math.floor(selectedStake*0.85)}&balance=${balance}`;
                     } else {
-                        tg.showAlert("ጨዋታው ተጀምሯል! ካርቴላ ስላልገዙ ማለፍ አይችሉም።");
+                        tg.showAlert("ካርቴላ አልገዙም!");
                         location.reload();
                     }
                 }
             }, 1000);
         }
 
-        // 3. Grid Generation
-        function generateCardGrid() {
-            const grid = document.getElementById('card-grid');
-            grid.innerHTML = '';
-            for(let i=1; i<=130; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'card-num-btn';
-                btn.innerText = i;
-                btn.id = 'card-' + i;
-                btn.onclick = () => openPreview(i);
-                grid.appendChild(btn);
-            }
-        }
-
-        // 4. Preview (Image 3)
-        let tempCard = null;
+        let tempNum = 0;
         function openPreview(num) {
-            if(purchasedCard) return;
-            tempCard = num;
-            document.getElementById('target-card').innerText = num;
+            if(purchasedCardNum) return;
+            tempNum = num;
+            document.getElementById('modal-title').innerText = "ካርቴላ #" + num;
             const pGrid = document.getElementById('preview-grid');
             pGrid.innerHTML = '';
             for(let i=0; i<25; i++) {
-                const d = document.createElement('div');
-                d.className = 'p-cell' + (i===12 ? ' star' : '');
-                d.innerText = i===12 ? '⭐' : Math.floor(Math.random()*75)+1;
-                pGrid.appendChild(d);
+                const c = document.createElement('div');
+                c.className = 'cell';
+                c.innerText = i === 12 ? "⭐" : Math.floor(Math.random() * 75) + 1;
+                pGrid.appendChild(c);
             }
             document.getElementById('preview-modal').style.display = 'flex';
         }
 
         function buyCard() {
-            if(currentBalance >= selectedStake) {
-                currentBalance -= selectedStake;
-                purchasedCard = tempCard;
-                document.getElementById('wallet-bal').innerText = currentBalance.toFixed(2);
-                document.getElementById('card-' + tempCard).classList.add('purchased');
-                closePreview();
+            if(balance >= selectedStake) {
+                balance -= selectedStake;
+                purchasedCardNum = tempNum;
+                document.getElementById('balance-display').innerText = balance.toFixed(2);
+                document.getElementById('card-' + tempNum).classList.add('selected');
+                closeModal();
                 tg.HapticFeedback.notificationOccurred('success');
             } else {
                 tg.showAlert("በቂ ሂሳብ የለዎትም!");
             }
         }
 
-        function closePreview() { document.getElementById('preview-modal').style.display = 'none'; }
+        function closeModal() { document.getElementById('preview-modal').style.display = 'none'; }
     </script>
 </body>
 </html>
