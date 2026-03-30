@@ -2,68 +2,84 @@
 <html lang="am">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ardi Bingo - Cartela</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ardi Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #f0f0f0; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        
-        /* Header Info Bar */
-        .info-bar { display: flex; justify-content: space-around; width: 100%; background: #fff; padding: 10px 0; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold; text-align: center; }
-        .info-item { display: flex; flex-direction: column; }
-        .info-value { color: #6a1b9a; font-size: 14px; }
-        .timer-val { color: red; }
-
-        /* Stake Input Area */
-        .stake-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 5px; width: 80px; }
-
-        /* Grid System */
-        .grid-container { background-color: #6a1b9a; padding: 15px; border-radius: 15px; display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; width: 100%; max-width: 380px; }
-        .num-btn { background-color: #e67e22; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; border: none; font-weight: bold; }
-        .num-btn.selected { background-color: #2ecc71; border: 2px solid white; }
-
-        /* Modal / Card Popup (Image 2 Style) */
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
-        .card-view { background: #f9c35d; width: 280px; border-radius: 15px; padding: 15px; position: relative; text-align: center; border: 4px solid #fff; }
-        .bingo-header { display: flex; justify-content: space-between; font-weight: bold; color: #d32f2f; font-size: 20px; margin-bottom: 5px; }
-        .card-grid-small { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: #fff; padding: 5px; border-radius: 5px; }
-        .cell { border: 1px solid #ccc; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; }
-        .cell.star { color: #2ecc71; font-size: 20px; }
-        .modal-btns { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
-        .btn-accept { background: #2ecc71; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; }
-        .btn-cancel { background: #e67e22; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; }
-
-        #derash-box { margin-top: 10px; font-weight: bold; color: #333; }
+        :root { --primary: #7b1fa2; --secondary: #4a148c; --accent: #ff9800; --bg: #311b92; }
+        body { font-family: 'Arial', sans-serif; background: #2c003e; color: white; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
+        .header-top { background: var(--bg); padding: 5px; display: flex; justify-content: space-around; font-size: 0.65rem; border-bottom: 2px solid var(--accent); }
+        .stat-box { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 55px; }
+        .info-container { display: flex; justify-content: center; gap: 10px; padding: 10px; }
+        .derash-box { background: #2e7d32; border: 2px solid #81c784; border-radius: 12px; padding: 10px; width: 140px; }
+        .timer-box { background: #4527a0; border: 2px solid #9575cd; border-radius: 12px; padding: 10px; width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .timer-circle { width: 35px; height: 35px; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
+        .logo-area { margin: 5px auto; width: 50px; height: 50px; background: white; border-radius: 50%; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); }
+        .logo-area img { width: 100%; border-radius: 50%; }
+        .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 10px; max-height: 55vh; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 0 10px; }
+        .card-select-btn { background: #e67e22; color: white; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; transition: 0.2s; }
+        .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; cursor: not-allowed; box-shadow: none; }
+        #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 320px; margin: 40px auto; border: 5px solid #ef6c00; }
+        .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
+        .letter-box { font-size: 1.4rem; font-weight: 900; padding: 5px; border-radius: 5px; color: white; text-shadow: 1px 1px 2px black; }
+        .letter-box.b { background: #4caf50; } .letter-box.i { background: #f44336; } .letter-box.n { background: #ffeb3b; color: #333; } .letter-box.g { background: #2196f3; } .letter-box.o { background: #e91e63; }
+        .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+        .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; color: #333; border-radius: 4px; border: 1px solid #ddd; }
+        .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; }
+        .cell.free { background: #4caf50; color: white; font-size: 0.6rem; flex-direction: column; }
+        .action-btns { margin-top: 15px; display: flex; justify-content: center; gap: 10px; }
+        .btn-accept { background: #2e7d32; color: white; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1b5e20; }
+        .btn-cancel { background: #ef6c00; color: white; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e65100; }
     </style>
 </head>
 <body>
 
-    <div class="info-bar">
-        <div class="info-item">Game ID <span class="info-value" id="gameId">-----</span></div>
-        <div class="info-item">Wallet <span class="info-value" id="balance">0.00 ETB</span></div>
-        <div class="info-item">Stake <span class="info-value" id="currentStake">0</span></div>
-        <div class="info-item">Timer <span class="info-value timer-val" id="timer">60s</span></div>
-    </div>
+    <div id="selection-screen">
+        <div class="header-top">
+            <div class="stat-box">Game<br><b id="game-id-display">------</b></div>
+            <div class="stat-box">Bet<br><b id="bet-display">-- ETB</b></div>
+            <div class="stat-box">Active<br><b id="active-count">0</b></div>
+            <div class="stat-box">Balance<br><b id="account-balance">0.00</b></div>
+        </div>
 
-    <div class="stake-header">
-        <input type="number" id="stakeAmount" value="10" oninput="updateStakeDisplay()">
-        <span id="derash-box">ደራሽ: <span id="derashVal">0.00</span> ETB</span>
-    </div>
-
-    <div class="grid-container" id="mainGrid"></div>
-
-    <div id="cardModal" class="modal">
-        <div class="card-view">
-            <div id="cardTitle" style="font-weight: bold; margin-bottom: 5px;">Card No: <span id="activeCardNum">0</span></div>
-            <div class="bingo-header">
-                <span>B</span><span>I</span><span>N</span><span>G</span><span>O</span>
+        <div class="info-container">
+            <div class="derash-box">
+                <span style="font-size: 0.8rem;">ደራሽ</span><br>
+                <b id="derash-amount" style="font-size: 1.2rem;">0 ETB</b>
             </div>
-            <div class="card-grid-small" id="bingoCardCells">
+            <div class="timer-box">
+                <div class="timer-circle" id="timer-display">60</div>
+                <div style="text-align: left; font-size: 0.7rem; line-height: 1;">
+                    <b>ታይመር</b><br><span id="timer-status">Starting On</span>
                 </div>
-            <div class="modal-btns">
-                <button class="btn-accept" onclick="confirmCard()">Accept</button>
-                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+
+        <div class="logo-area">
+            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
+        </div>
+        
+        <h3 style="color: #00d2ff; margin: 5px; font-size: 1rem;">እባክዎ ካርቴላ ይምረጡ</h3>
+        <div class="selection-grid" id="card-list"></div>
+    </div>
+
+    <div id="game-screen">
+        <div class="bingo-card-container">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #333; font-weight: bold;">
+                <span>Card Price: <span id="preview-price">--</span> ETB</span>
+            </div>
+            <div class="bingo-header-letters">
+                <div class="letter-box b">B</div><div class="letter-box i">I</div>
+                <div class="letter-box n">N</div><div class="letter-box g">G</div>
+                <div class="letter-box o">O</div>
+            </div>
+            <div class="bingo-grid" id="board"></div>
+            <div class="action-btns">
+                <button class="btn-accept" id="final-buy-btn">Accept</button>
+                <button class="btn-cancel" onclick="closeGameScreen()">Cancel</button>
             </div>
         </div>
     </div>
@@ -72,80 +88,105 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 1. Random Game ID
+        const gameID = Math.floor(100000 + Math.random() * 900000);
+        document.getElementById('game-id-display').innerText = gameID;
+
+        // 2. Bet/Stake Sync - ከቦቱ የመጣውን Stake በቀጥታ ይወስዳል
+        let currentStake = parseInt(urlParams.get('stake')) || 20;
+
+        // 3. Balance Sync - ቦቱ ላይ ያለውን ባላንስ (ለምሳሌ 500.00 ETB) በቀጥታ ሚኒ አፑ ላይ ካለው ጋር ያገናኛል
+        let currentBalance = parseFloat(urlParams.get('balance')) || 0.00;
+
+        let purchasedCount = 0;
+        let gameStarted = false;
+
+        function updateUI() {
+            let derash = purchasedCount * 0.85 * currentStake;
+            document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
+            
+            // ባላንሱን ከቦቱ ጋር እኩል ያደርገዋል
+            document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
+            document.getElementById('bet-display').innerText = currentStake + " ETB";
+            document.getElementById('preview-price').innerText = currentStake;
+            
+            // ካርቴላ ሲገዛ አክቲቭ 1 ይሆናል
+            document.getElementById('active-count').innerText = purchasedCount > 0 ? "1" : "0";
+        }
+
         let timeLeft = 60;
-        let selectedCards = new Set();
-        let lastClickedNum = 0;
-
-        // 1. Game ID - 5 digit random
-        document.getElementById('gameId').innerText = Math.floor(10000 + Math.random() * 90000);
-
-        // 2. Timer Logic
         const timerInterval = setInterval(() => {
-            timeLeft--;
-            document.getElementById('timer').innerText = timeLeft + "s";
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                alert("ጨዋታው እየተጀመረ ነው...");
-                // ወደ ጨዋታው መጥሪያ ገጽ ይወስዳል
-                window.location.href = "game_call.html"; 
+            if (timeLeft > 0) {
+                timeLeft--;
+                document.getElementById('timer-display').innerText = timeLeft;
+            } else if (!gameStarted) {
+                gameStarted = true;
+                document.getElementById('timer-status').innerText = "Running";
             }
         }, 1000);
 
-        // 3. Grid Generation (1-130)
-        const grid = document.getElementById('mainGrid');
+        const cardList = document.getElementById('card-list');
         for (let i = 1; i <= 130; i++) {
-            let btn = document.createElement('button');
-            btn.className = 'num-btn';
-            btn.id = 'btn-' + i;
+            const btn = document.createElement('button');
+            btn.className = 'card-select-btn';
             btn.innerText = i;
-            btn.onclick = () => openCard(i);
-            grid.appendChild(btn);
+            btn.id = 'card-' + i;
+            btn.onclick = () => openPreview(i);
+            cardList.appendChild(btn);
         }
 
-        function openCard(num) {
-            lastClickedNum = num;
-            document.getElementById('activeCardNum').innerText = num;
-            generateBingoCard();
-            document.getElementById('cardModal').style.display = 'flex';
-        }
-
-        function generateBingoCard() {
-            const container = document.getElementById('bingoCardCells');
-            container.innerHTML = "";
-            // B: 1-15, I: 16-30, N: 31-45, G: 46-60, O: 61-75 (Sample logic)
-            for (let i = 0; i < 25; i++) {
-                let cell = document.createElement('div');
-                cell.className = 'cell';
-                if (i === 12) {
-                    cell.innerHTML = "⭐";
-                    cell.className += " star";
+        function openPreview(num) {
+            if (document.getElementById('card-' + num).classList.contains('purchased')) return;
+            document.getElementById('game-screen').style.display = 'block';
+            createBoard();
+            document.getElementById('final-buy-btn').onclick = () => {
+                if (currentBalance >= currentStake) {
+                    executePurchase(num);
                 } else {
-                    cell.innerText = Math.floor(Math.random() * 75) + 1;
+                    tg.showAlert("በቂ ሂሳብ የለዎትም!");
                 }
-                container.appendChild(cell);
+            };
+        }
+
+        function executePurchase(num) {
+            currentBalance -= currentStake; // ካርቴላ ሲገዛ ከባላንስ ይቀንሳል
+            purchasedCount++;
+            document.getElementById('card-' + num).classList.add('purchased');
+            updateUI();
+            closeGameScreen();
+            tg.HapticFeedback.impactOccurred('medium');
+            
+            // መረጃውን ለቦቱ መላክ
+            tg.sendData(JSON.stringify({
+                action: "buy", 
+                card: num, 
+                amount: currentStake, 
+                game: gameID,
+                balance: currentBalance
+            }));
+        }
+
+        function closeGameScreen() { document.getElementById('game-screen').style.display = 'none'; }
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            const ranges = [{min:1,max:15},{min:16,max:30},{min:31,max:45},{min:46,max:60},{min:61,max:75}];
+            for(let r=0; r<5; r++) {
+                for(let c=0; c<5; c++) {
+                    const cell = document.createElement('div');
+                    if(r===2 && c===2) { cell.className='cell free marked'; cell.innerHTML='<i class="fas fa-star"></i>FREE'; }
+                    else {
+                        cell.className = 'cell';
+                        cell.innerText = Math.floor(Math.random()*(ranges[c].max-ranges[c].min+1))+ranges[c].min;
+                    }
+                    board.appendChild(cell);
+                }
             }
         }
-
-        function confirmCard() {
-            selectedCards.add(lastClickedNum);
-            document.getElementById('btn-' + lastClickedNum).classList.add('selected');
-            updateStakeDisplay();
-            closeModal();
-        }
-
-        function closeModal() {
-            document.getElementById('cardModal').style.display = 'none';
-        }
-
-        function updateStakeDisplay() {
-            let stake = parseFloat(document.getElementById('stakeAmount').value) || 0;
-            document.getElementById('currentStake').innerText = stake;
-            let derash = stake * 0.85 * selectedCards.size;
-            document.getElementById('derashVal').innerText = derash.toFixed(2);
-        }
-
-        // 4. Wallet Balance (ከቦቱ የሚመጣ መረጃ ካለ እዚህ ይገባል)
-        // ለጊዜው በናሙና 0.00 ETB ተደርጓል
+        updateUI();
     </script>
 </body>
 </html>
