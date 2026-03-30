@@ -1,240 +1,95 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ardi Bingo</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="telegram-web-app" content="yes">
+    <title>Ardi Bingo - Live Game</title>
     <style>
-        :root { --primary: #7b1fa2; --secondary: #4a148c; --accent: #ff9800; --bg: #311b92; }
-        body { font-family: 'Arial', sans-serif; background: #2c003e; color: white; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
-
-        .header-top { background: var(--bg); padding: 5px; display: flex; justify-content: space-around; font-size: 0.65rem; border-bottom: 2px solid var(--accent); }
-        .stat-box { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 55px; }
-        
-        .info-container { display: flex; justify-content: center; gap: 10px; padding: 10px; }
-        .derash-box { background: #2e7d32; border: 2px solid #81c784; border-radius: 12px; padding: 10px; width: 140px; }
-        .timer-box { background: #4527a0; border: 2px solid #9575cd; border-radius: 12px; padding: 10px; width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .timer-circle { width: 35px; height: 35px; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
-        
-        .logo-area { margin: 5px auto; width: 50px; height: 50px; background: white; border-radius: 50%; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); }
-        .logo-area img { width: 100%; border-radius: 50%; }
-
-        .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 10px; max-height: 55vh; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 0 10px; }
-        .card-select-btn { background: #e67e22; color: white; padding: 10px 2px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; border: none; cursor: pointer; box-shadow: 0 3px 0 #d35400; transition: 0.2s; }
-        .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; cursor: not-allowed; box-shadow: none; }
-
-        #game-screen { display: none; padding: 10px; animation: fadeIn 0.3s; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-width: 320px; margin: 40px auto; border: 5px solid #ef6c00; }
-        .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
-        .letter-box { font-size: 1.4rem; font-weight: 900; padding: 5px; border-radius: 5px; color: white; text-shadow: 1px 1px 2px black; }
-        .letter-box.b { background: #4caf50; } .letter-box.i { background: #f44336; } .letter-box.n { background: #ffeb3b; color: #333; } .letter-box.g { background: #2196f3; } .letter-box.o { background: #e91e63; }
-
-        .bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-        .cell { background: white; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: bold; color: #333; border-radius: 4px; border: 1px solid #ddd; }
-        .cell.marked { background: #4caf50 !important; color: white; border: 2px solid white; }
-        .cell.free { background: #4caf50; color: white; font-size: 0.6rem; flex-direction: column; }
-
-        .action-btns { margin-top: 15px; display: flex; justify-content: center; gap: 10px; }
-        .btn-accept { background: #2e7d32; color: white; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #1b5e20; }
-        .btn-cancel { background: #ef6c00; color: white; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #e65100; }
-    </style>
-</head>
-<body>
-
-    <div id="selection-screen">
-        <div class="header-top">
-            <div class="stat-box">Game<br><b>303397</b></div>
-            <div class="stat-box">Bet<br><b id="bet-display">-- ETB</b></div>
-            <div class="stat-box">Active<br><b id="active-count">0</b></div>
-            <div class="stat-box">Wallet<br><b id="wallet-balance">0.00</b></div>
-        </div>
-
-        <div class="info-container">
-            <div class="derash-box">
-                <span style="font-size: 0.8rem;">ደራሽ</span><br>
-                <b id="derash-amount" style="font-size: 1.2rem;">0 ETB</b>
-            </div>
-            <div class="timer-box">
-                <div class="timer-circle" id="timer-display">60</div>
-                <div style="text-align: left; font-size: 0.7rem; line-height: 1;">
-                    <b>ታይመር</b><br><span id="timer-status">Starting On</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="logo-area">
-            <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
-        </div>
-        
-        <h3 style="color: #00d2ff; margin: 5px; font-size: 1rem;">እባክዎ ካርቴላ ይምረጡ</h3>
-        <div class="selection-grid" id="card-list"></div>
-    </div>
-
-    <div id="game-screen">
-        <div class="bingo-card-container">
-            <div class="bingo-header-letters">
-                <div class="letter-box b">B</div><div class="letter-box i">I</div>
-                <div class="letter-box n">N</div><div class="letter-box g">G</div>
-                <div class="letter-box o">O</div>
-            </div>
-            <div class="bingo-grid" id="board"></div>
-            <div class="action-btns">
-                <button class="btn-accept" id="final-buy-btn">Accept</button>
-                <button class="btn-cancel" onclick="closeGameScreen()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        // --- 1. Wallet & Deposit Logic (አዲስ ብር ሲጨመር እንዲደምር) ---
-        let urlBalance = parseFloat(urlParams.get('balance')) || 0;
-        let savedBalance = localStorage.getItem('ardi_wallet');
-        let lastKnownUrlBalance = parseFloat(localStorage.getItem('last_url_val') || 0);
-        
-        let walletBalance;
-        if (savedBalance === null) {
-            // ገጹ ለመጀመሪያ ጊዜ ሲከፈት ከቦቱ የመጣውን ተጠቀም
-            walletBalance = urlBalance;
-        } else {
-            walletBalance = parseFloat(savedBalance);
-            // ቦቱ ላይ አዲስ ዲፖዚት ተደርጎ ከሆነ (ለምሳሌ ከ 200 ወደ 500 ካደገ) ልዩነቱን ጨምር
-            if (urlBalance > lastKnownUrlBalance) {
-                walletBalance += (urlBalance - lastKnownUrlBalance);
-            }
-        }
-        
-        // ዳታውን ለቀጣይ ሪፍሬሽ እንዲሆን ሴቭ አድርግ
-        localStorage.setItem('ardi_wallet', walletBalance);
-        localStorage.setItem('last_url_val', urlBalance);
-
-        // --- 2. Stake/Bet Logic (ከቦቱ በመጣው መጠን እንዲሆን) ---
-        let stake = parseInt(urlParams.get('stake')) || 20; 
-        let purchasedCards = parseInt(localStorage.getItem('ardi_active_cards')) || 0;
-        
-        // --- 3. Timer Logic (ሪፍሬሽ ሲደረግ እንዳይቆም) ---
-        let timeLeft = parseInt(localStorage.getItem('ardi_timer_save'));
-        if (isNaN(timeLeft)) timeLeft = 60;
-        
-        let gameStarted = false;
-
-        function updateStats() {
-            let derash = purchasedCards * 0.85 * stake;
-            document.getElementById('derash-amount').innerText = derash.toFixed(0) + " ETB";
-            document.getElementById('wallet-balance').innerText = walletBalance.toFixed(2);
-            document.getElementById('bet-display').innerText = stake + " ETB";
-            document.getElementById('active-count').innerText = purchasedCards;
-            
-            // ሁልጊዜ ለውጥ ሲኖር ሴቭ አድርግ
-            localStorage.setItem('ardi_wallet', walletBalance);
-            localStorage.setItem('ardi_active_cards', purchasedCards);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        const countdown = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                document.getElementById('timer-display').innerText = timeLeft;
-                localStorage.setItem('ardi_timer_save', timeLeft);
-            } else {
-                gameStarted = true;
-                document.getElementById('timer-status').innerText = "Running";
-            }
-        }, 1000);
-
-        // ካርቴላዎችን ፍጠር
-        const cardList = document.getElementById('card-list');
-        for (let i = 1; i <= 130; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'card-select-btn';
-            btn.innerText = i;
-            btn.id = 'card-' + i;
-            
-            // ሪፍሬሽ ሲደረግ የተገዙት አረንጓዴ እንደሆኑ እንዲቆዩ
-            if (localStorage.getItem('card_purchased_' + i) === 'true') {
-                btn.classList.add('purchased');
-            }
-
-            btn.onclick = () => openPurchasePreview(i);
-            cardList.appendChild(btn);
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a472a 0%, #2a6230 100%);
+            min-height: 100vh;
+            padding: 16px;
         }
 
-        function openPurchasePreview(num) {
-            const btn = document.getElementById('card-' + num);
-            if (btn.classList.contains('purchased')) return;
-
-            document.getElementById('game-screen').style.display = 'block';
-            createBoard();
-            
-            document.getElementById('final-buy-btn').onclick = () => {
-                if (walletBalance >= stake) {
-                    confirmPurchase(num);
-                } else {
-                    tg.showAlert("በቂ ሂሳብ የለዎትም!");
-                }
-            };
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
-        function confirmPurchase(num) {
-            walletBalance -= stake; // እዚህ ጋር ነው ሂሳብ የሚቀንሰው
-            purchasedCards++;
-            
-            const btn = document.getElementById('card-' + num);
-            btn.classList.add('purchased');
-            localStorage.setItem('card_purchased_' + num, 'true'); // ሴቭ
-            
-            updateStats();
-            closeGameScreen();
-            tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({action: "buy", card: num, amount: stake}));
+        .header {
+            background: linear-gradient(135deg, #d4af37 0%, #f4c542 100%);
+            color: #1a472a;
+            padding: 20px;
+            text-align: center;
         }
 
-        // ማሸነፍ ሲኖር ይህን ፈንክሽን መጥራት ትችላለህ
-        function winPrize(amount) {
-            walletBalance += amount;
-            updateStats();
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            font-weight: bold;
         }
 
-        function closeGameScreen() {
-            document.getElementById('game-screen').style.display = 'none';
+        .game-info {
+            background: #f8f9fa;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        function createBoard() {
-            const board = document.getElementById('board');
-            board.innerHTML = '';
-            const ranges = [{min:1,max:15},{min:16,max:30},{min:31,max:45},{min:46,max:60},{min:61,max:75}];
-            let matrix = [];
-            for(let c=0; c<5; c++) {
-                let nums = [];
-                while(nums.length<5){
-                    let r = Math.floor(Math.random()*(ranges[c].max-ranges[c].min+1))+ranges[c].min;
-                    if(!nums.includes(r)) nums.push(r);
-                }
-                matrix.push(nums);
-            }
-
-            for(let r=0; r<5; r++) {
-                for(let c=0; c<5; c++) {
-                    const cell = document.createElement('div');
-                    if(r===2 && c===2) {
-                        cell.className = 'cell free marked';
-                        cell.innerHTML = '<i class="fas fa-star"></i>FREE';
-                    } else {
-                        cell.className = 'cell';
-                        cell.innerText = matrix[c][r];
-                    }
-                    board.appendChild(cell);
-                }
-            }
+        .info-card {
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        updateStats(); // ገጹ ሲከፈት ባላንሱን ወዲያው እንዲያሳይ
-    </script>
-</body>
-</html>
+        .info-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a472a;
+        }
+
+        .timer-section {
+            background: #fff3cd;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #ffc107;
+        }
+
+        .timer {
+            font-size: 56px;
+            font-weight: bold;
+            color: #dc3545;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        .timer-label {
+            font-size: 12px;
+            color: #856404;
+            margin-top: 5px;
+        }
+
+        .
