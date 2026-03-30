@@ -324,14 +324,11 @@
                 showView('view-play');
                 const lastNum = g.calledNumbers[g.calledNumbers.length-1] || '--';
                 document.getElementById('cur-num').innerText = lastNum;
-                lastCalledNumberAtBingoCall = lastNum; // ሰርቨሩ የጠራውን የመጨረሻ ቁጥር መመዝገብ
+                lastCalledNumberAtBingoCall = lastNum;
                 
                 const totalSold = Object.keys(g.soldCards).length;
                 document.getElementById('live-win-amt').innerText = (totalSold === 1 ? activeStake : (totalSold * activeStake * 0.8)).toFixed(2) + " ETB";
-                g.calledNumbers.forEach(n => {
-                    const b = document.getElementById(`ball-${n}`);
-                    if(b) b.classList.add('active');
-                });
+                g.calledNumbers.forEach(n => document.getElementById(`ball-${n}`).classList.add('active'));
                 const playArea = document.getElementById('play-area');
                 if(playArea.innerHTML === '') {
                     user.activeCards.forEach((card, idx) => {
@@ -350,13 +347,12 @@
             stake: user.activeCards[idx].stake, 
             nums: user.activeCards[idx].nums, 
             cardId: user.activeCards[idx].cardId,
-            lastCalled: lastCalledNumberAtBingoCall 
+            lastCalled: lastCalledNumberAtBingoCall // ጥብቅ ቼክ፡ ቢንጎ ሲባል የነበረው የመጨረሻ ቁጥር
         }); 
     }
 
     function renderGrid(id, arr) {
-        const g = document.getElementById(id); if(!g) return;
-        g.innerHTML = '';
+        const g = document.getElementById(id); g.innerHTML = '';
         arr.forEach((n, i) => {
             const d = document.createElement('div'); d.className='cell'; d.innerText=n;
             if(n === 'FREE') d.classList.add('marked');
@@ -381,15 +377,13 @@
         }
     });
 
-    socket.on('err', (msg) => {
-        Swal.fire('ማሳሰቢያ', msg, 'info').then(() => {
-            // "አልፎታል" የሚለው መልዕክት ከመጣ ተጫዋቹን ወደ መነሻ እንዲመለስ ማድረግ
-            if (msg.includes("አልፏል")) {
-                resetGameUI();
-            }
-        });
-    });
+    socket.on('err', (msg) => Swal.fire('ማሳሰቢያ', msg, 'info'));
     
+    // Server says Bingo failed validation (The number has passed or no line)
+    socket.on('bingoFailed', (msg) => {
+        Swal.fire({ title: 'ቢንጎ አልተሳካም', text: msg, icon: 'error', confirmButtonText: 'ቀጥል' });
+    });
+
     function closeWinOverlay() { document.getElementById('win-overlay').style.display = 'none'; resetGameUI(); }
     
     function cancelCurrentGame() {
@@ -435,7 +429,11 @@
     async function withdraw() {
         const amt = parseFloat(document.getElementById('wd-amt').value), ph = document.getElementById('wd-phone').value;
         if(!amt || !ph) return Swal.fire('ስህተት', 'መረጃ ይሙሉ', 'error');
-        if (amt > user.balance) return Swal.fire('ማሳሰቢያ', 'በቂ ባላንስ የለዎትም!', 'warning');
+        
+        // በቂ ባላንስ መኖሩን እዚህም ቼክ እናደርጋለን
+        if (amt > user.balance) {
+            return Swal.fire('ማሳሰቢያ', 'በቂ ባላንስ የለዎትም!', 'warning');
+        }
 
         await fetch('/api/wallet', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone: user.phone, type: 'withdraw', amount: amt, method: 'Telebirr', wdPhone: ph })});
         Swal.fire('ተልኳል', 'የማውጣት ጥያቄው ደርሷል!', 'success');
