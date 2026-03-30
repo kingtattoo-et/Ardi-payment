@@ -2,7 +2,7 @@
 <html lang="am">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ardi Bingo</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -89,14 +89,12 @@
                 <div class="main-logo">ARDI BINGO</div>
             </div>
             <button class="play-btn-large" onclick="openStakeView()">🎮 Play Bingo</button>
-            
             <div class="coming-soon-container">
                 <div class="coming-soon-box-3d">
                     <div class="cs-title-3d">SPIN</div>
                     <div class="cs-icon-3d cs-spin"><i class="fas fa-sync-alt"></i></div>
                     <div class="cs-text-3d">COMING SOON</div>
                 </div>
-
                 <div class="coming-soon-box-3d">
                     <div class="cs-title-3d">KENO</div>
                     <div class="cs-icon-3d"><i class="fas fa-th"></i></div>
@@ -118,12 +116,9 @@
         <div id="view-wallet" class="view" style="display:none;">
             <div style="background:var(--card-bg); padding:15px; border-radius:10px; border:1px solid var(--gold);">
                <h4 style="margin:0; color:var(--gold);">ገንዘብ አስገባ (Deposit)</h4>
-               <p id="bank-info" style="font-size:12px; background:#000; padding:10px; border:1px solid var(--gold); color:var(--gold); line-height:1.4;"></p>
-               <select id="dep-bank" onchange="updateBankInfo()"><option value="Telebirr">Telebirr</option><option value="CBEBirr">CBE Birr</option></select>
-               <input type="number" id="dep-amt" placeholder="የብር መጠን">
-               <input type="text" id="dep-tx" placeholder="Transaction ID">
-               <input type="file" id="dep-file" style="color:white; font-size: 10px;">
-               <button onclick="deposit()" class="btn" style="background:var(--green); color:white;">አስገባ</button>
+               <p style="font-size: 13px; color: #fff; margin-bottom: 10px;">በቴሌብር ወይም በሲቢኢ ብር በፍጥነት ገንዘብ ለማስገባት ከታች ያለውን ሊንክ ይጫኑ።</p>
+               <button onclick="window.location.href='payment.html'" class="btn" style="background:var(--gold); color:#000; margin-bottom: 20px;">ወደ መክፈያ ገፅ ሂድ (Go to Payment)</button>
+               
                <hr style="border: 0.5px solid #444; margin: 15px 0;">
                <h4 style="margin:0; color:var(--red);">ገንዘብ አውጣ (Withdraw)</h4>
                <input type="number" id="wd-amt" placeholder="የብር መጠን">
@@ -152,28 +147,9 @@
             </div>
         </div>
 
-        <div id="view-history" class="view" style="display:none;">
-            <h4 style="color:var(--gold);">የጨዋታ ታሪክ</h4>
-            <div id="history-list"></div>
-        </div>
-
-        <div id="view-rules" class="view" style="display:none; line-height:1.6; font-size:14px;">
-            <h4 style="color:var(--gold);">የጨዋታ ህጎች እና መመሪያ (How to Play)</h4>
-            1. <b>ባላንስ፦</b> ለመጫወት መጀመሪያ በቂ ባላንስ በዋሌትዎ በኩል ያስገቡ።<br>
-            2. <b>ስቴክ፦</b> የሚፈልጉትን የብር መጠን (20፣ 30፣ 50፣ 100) ይምረጡ።<br>
-            3. <b>ካርድ፦</b> በአንድ ጨዋታ እስከ 4 ካርዶችን መግዛት ይችላሉ።<br>
-            4. <b>አጨዋወት፦</b> ጨዋታው ሲጀመር ቁጥሮች በየተራ ይወጣሉ። ካርድዎ ላይ ያለውን ቁጥር ይጫኑ።<br>
-            5. <b>ቢንጎ (Bingo)፦</b> 1 መስመር (አግድም፣ ቁልቁል፣ ወይም ዲያጎናል) ሲሞላ "BINGO" የሚለውን ይጫኑ።<br>
-            6. <b>ጥብቅ ህግ (Strict Rule)፦</b> ቢንጎ ሲሉ <b>የመጨረሻው የተጠራው ቁጥር</b> የግድ መስመሩን የሰራው ቁጥር መሆን አለበት። ቁጥሩ ተጠርቶ ካለፈ (Next Number ከወጣ) "አልፎታል" ተብሎ ቢንጎው ተቀባይነት አይኖረውም።<br>
-            7. <b>ሽልማት፦</b> ቀድሞ ቢንጎ ያለው አሸናፊ ሆኖ የጠቅላላ ስቴኩን 80% ይወስዳል።<br>
-        </div>
-
-        <div id="view-contact" class="view" style="display:none;">
-            <h4 style="color:var(--gold);">መልዕክት ለአድሚን ይላኩ</h4>
-            <textarea id="contact-msg" rows="5" placeholder="ጥያቄ ወይም አስተያየትዎን እዚህ ይጻፉ..."></textarea>
-            <button onclick="sendContact()" class="btn" style="background:var(--gold); color:#000;">ላክ</button>
-        </div>
-
+        <div id="view-history" class="view" style="display:none;"><h4 style="color:var(--gold);">የጨዋታ ታሪክ</h4><div id="history-list"></div></div>
+        <div id="view-rules" class="view" style="display:none; line-height:1.6; font-size:14px;"><h4 style="color:var(--gold);">የጨዋታ ህጎች</h4>1. ባላንስ ያስገቡ። 2. ስቴክ ይምረጡ። 3. ካርድ ይግዙ። 4. ቢንጎ ይበሉ።</div>
+        <div id="view-contact" class="view" style="display:none;"><h4 style="color:var(--gold);">መልዕክት ለአድሚን</h4><textarea id="contact-msg" rows="5" placeholder="ጥያቄዎን ይጻፉ..."></textarea><button onclick="sendContact()" class="btn" style="background:var(--gold);">ላክ</button></div>
         <div id="view-cards" class="view" style="display:none;"><div id="card-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div></div>
         <div id="view-preview" class="view" style="display:none; text-align:center;"><h3 style="color:var(--gold);">Card # <span id="preview-id">--</span></h3><div class="card-grid" id="preview-grid" style="width:250px; margin:auto; margin-bottom:15px;"></div><div style="display:flex; justify-content: space-around;"><button onclick="buyConfirmed()" class="btn" style="background:var(--green); color:white; width:45%;">ግዛ</button><button onclick="showView('view-cards', true)" class="btn" style="background:var(--red); color:white; width:45%;">ቀይር</button></div></div>
         <div id="view-play" class="view" style="display:none;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;"><button class="cancel-btn" onclick="cancelCurrentGame()" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:5px;">Cancel ❌</button><div style="background:var(--gold); color:#000; padding:2px 10px; border-radius:5px; font-weight:bold; font-size:12px;" id="live-win-amt">0.00 ETB</div></div><div class="ball-history" id="ball-box"></div><div style="text-align:center; margin-bottom:10px;"><small style="color:var(--gold); display:block;">ቁጥር</small><div style="font-size:40px; color:white; font-weight:bold;" id="cur-num">--</div></div><div id="play-area"></div></div>
@@ -203,6 +179,20 @@
     let viewHistory = [];
     let lastCalledNumberAtBingoCall = 0;
 
+    // --- ባላንስን ከ LocalStorage የማንበብ ሎጂክ ---
+    function syncBalance() {
+        const savedBal = localStorage.getItem('userBalance');
+        if (savedBal !== null) {
+            user.balance = parseFloat(savedBal);
+            document.getElementById('u-bal').innerText = user.balance.toFixed(2);
+        }
+        // በየ 5 ሰከንዱ ሰርቨሩን ለትክክለኛው ባላንስ መጠየቅ
+        if(user.phone) {
+            socket.emit('requestBalance', user.phone);
+        }
+    }
+    setInterval(syncBalance, 5000);
+
     const ballBox = document.getElementById('ball-box');
     for(let i=1; i<=75; i++){
         const d = document.createElement('div'); d.className='ball'; d.id=`ball-${i}`; d.innerText=i; ballBox.appendChild(d);
@@ -211,7 +201,6 @@
     function showView(viewId, pushHistory = false) {
         document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
         document.getElementById(viewId).style.display = 'block';
-        
         document.querySelectorAll('.footer-item').forEach(f => f.classList.remove('active'));
         if(viewId === 'view-welcome') document.getElementById('f-home').classList.add('active');
         if(viewId === 'view-wallet') document.getElementById('f-wallet').classList.add('active');
@@ -239,6 +228,7 @@
         const data = await res.json();
         if(data.success) { 
             user.phone = p; user.balance = data.balance; 
+            localStorage.setItem('userBalance', data.balance);
             document.getElementById('u-bal').innerText = data.balance.toFixed(2); 
             document.getElementById('auth').style.display = 'none'; showView('view-welcome'); 
         } else Swal.fire('ስህተት', data.msg, 'error');
@@ -246,44 +236,20 @@
 
     function logout() {
         user = { phone: '', balance: 0, activeCards: [] };
+        localStorage.removeItem('userBalance');
         document.getElementById('phone').value = '';
         document.getElementById('pass').value = '';
         document.getElementById('auth').style.display = 'flex';
         showView('view-welcome');
     }
 
-    function showHistory() {
-        socket.emit('getHistory', user.phone, (history) => {
-            const list = document.getElementById('history-list');
-            list.innerHTML = history && history.length ? '' : '<p style="text-align:center;">ምንም ታሪክ የለም</p>';
-            if(history) {
-                history.forEach(h => {
-                    list.innerHTML += `<div class="history-item">📅 ${h.date}<br>💰 መጠን: ${h.amount} ETB (${h.type}) - Stake: ${h.stake || '-'}</div>`;
-                });
-            }
-            showView('view-history', true);
-        });
-    }
-
-    function showRules() { showView('view-rules', true); }
-    function showContact() { showView('view-contact', true); }
-
-    async function sendContact() {
-        const msg = document.getElementById('contact-msg').value;
-        if(!msg) return;
-        await fetch('/api/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone:user.phone, message:msg})});
-        Swal.fire('ተልኳል', 'መልዕክትዎ ለአድሚን ደርሷል!', 'success');
-        document.getElementById('contact-msg').value = '';
-        goBack();
-    }
-
-    function updateBankInfo() {
-        const bank = document.getElementById('dep-bank').value;
-        document.getElementById('bank-info').innerHTML = `በ <b>0979429028</b> (ስም: <b>Yordanos</b>) በ${bank === 'Telebirr' ? 'ቴሌብር' : 'ሲቢኢ ብር'} ብር ያስገቡና Transaction ID ወይም ስክሪንሾት ይላኩ።`;
-    }
-    updateBankInfo();
-
-    socket.on('balanceUpdate', (d) => { if(d.phone===user.phone){ user.balance=d.newBalance; document.getElementById('u-bal').innerText=d.newBalance.toFixed(2); } });
+    socket.on('balanceUpdate', (d) => { 
+        if(d.phone===user.phone){ 
+            user.balance=d.newBalance; 
+            localStorage.setItem('userBalance', d.newBalance);
+            document.getElementById('u-bal').innerText=d.newBalance.toFixed(2); 
+        } 
+    });
 
     function openStakeView() { showView('view-stake', true); }
 
@@ -307,7 +273,9 @@
         const data = await res.json();
         if(data.success) { 
             user.activeCards.push({ stake: curStake, nums: tempNums, cardId: tempCardId }); 
-            user.balance = data.newBalance; document.getElementById('u-bal').innerText = data.newBalance.toFixed(2);
+            user.balance = data.newBalance; 
+            localStorage.setItem('userBalance', data.newBalance);
+            document.getElementById('u-bal').innerText = data.newBalance.toFixed(2);
             showView('view-welcome');
         } else Swal.fire('ማሳሰቢያ', data.msg, 'warning');
     }
@@ -325,7 +293,6 @@
                 const lastNum = g.calledNumbers[g.calledNumbers.length-1] || '--';
                 document.getElementById('cur-num').innerText = lastNum;
                 lastCalledNumberAtBingoCall = lastNum;
-                
                 const totalSold = Object.keys(g.soldCards).length;
                 document.getElementById('live-win-amt').innerText = (totalSold === 1 ? activeStake : (totalSold * activeStake * 0.8)).toFixed(2) + " ETB";
                 g.calledNumbers.forEach(n => document.getElementById(`ball-${n}`).classList.add('active'));
@@ -342,13 +309,7 @@
     });
 
     function callBingo(idx) { 
-        socket.emit('callBingo', { 
-            phone: user.phone, 
-            stake: user.activeCards[idx].stake, 
-            nums: user.activeCards[idx].nums, 
-            cardId: user.activeCards[idx].cardId,
-            lastCalled: lastCalledNumberAtBingoCall // ጥብቅ ቼክ፡ ቢንጎ ሲባል የነበረው የመጨረሻ ቁጥር
-        }); 
+        socket.emit('callBingo', { phone: user.phone, stake: user.activeCards[idx].stake, nums: user.activeCards[idx].nums, cardId: user.activeCards[idx].cardId, lastCalled: lastCalledNumberAtBingoCall }); 
     }
 
     function renderGrid(id, arr) {
@@ -378,19 +339,9 @@
     });
 
     socket.on('err', (msg) => Swal.fire('ማሳሰቢያ', msg, 'info'));
-    
-    // Server says Bingo failed validation (The number has passed or no line)
-    socket.on('bingoFailed', (msg) => {
-        Swal.fire({ title: 'ቢንጎ አልተሳካም', text: msg, icon: 'error', confirmButtonText: 'ቀጥል' });
-    });
-
+    socket.on('bingoFailed', (msg) => Swal.fire({ title: 'ቢንጎ አልተሳካም', text: msg, icon: 'error' }));
     function closeWinOverlay() { document.getElementById('win-overlay').style.display = 'none'; resetGameUI(); }
-    
-    function cancelCurrentGame() {
-        Swal.fire({ title: 'እርግጠኛ ነህ?', text: "Stake አይመለስም!", icon: 'warning', showCancelButton: true, confirmButtonText: 'አቁም' })
-        .then((result) => { if (result.isConfirmed) socket.emit('cancelGameManually', { phone: user.phone }); });
-    }
-    
+    function cancelCurrentGame() { Swal.fire({ title: 'እርግጠኛ ነህ?', text: "Stake አይመለስም!", icon: 'warning', showCancelButton: true }).then((result) => { if (result.isConfirmed) socket.emit('cancelGameManually', { phone: user.phone }); }); }
     socket.on('gameCancelledOK', () => resetGameUI());
     socket.on('gameEndedAuto', () => resetGameUI());
     
@@ -401,44 +352,26 @@
     }
 
     function genNums() {
-        let n = new Array(25);
-        const ranges = [[1, 15], [16, 30], [31, 45], [46, 60], [61, 75]];
+        let n = new Array(25); const ranges = [[1, 15], [16, 30], [31, 45], [46, 60], [61, 75]];
         for (let col = 0; col < 5; col++) {
-            let colNums = [];
-            let [min, max] = ranges[col];
-            while (colNums.length < 5) {
-                let num = Math.floor(Math.random() * (max - min + 1)) + min;
-                if (!colNums.includes(num)) colNums.push(num);
-            }
+            let colNums = []; let [min, max] = ranges[col];
+            while (colNums.length < 5) { let num = Math.floor(Math.random() * (max - min + 1)) + min; if (!colNums.includes(num)) colNums.push(num); }
             for (let row = 0; row < 5; row++) { n[row * 5 + col] = colNums[row]; }
         }
-        n[12] = 'FREE';
-        return n;
-    }
-
-    async function deposit() {
-        const amt = document.getElementById('dep-amt').value, tx = document.getElementById('dep-tx').value;
-        if(!amt || !tx) return Swal.fire('ስህተት', 'እባክዎ መረጃ ይሙሉ', 'warning');
-        const fd = new FormData(); fd.append('phone', user.phone); fd.append('type', 'deposit'); fd.append('amount', amt); fd.append('txId', tx);
-        fd.append('method', document.getElementById('dep-bank').value); fd.append('screenshot', document.getElementById('dep-file').files[0]);
-        await fetch('/api/wallet', { method: 'POST', body: fd });
-        Swal.fire('ተልኳል', 'የማስገባት ጥያቄው ለአድሚን ደርሷል!', 'success');
-        document.getElementById('dep-amt').value = ''; document.getElementById('dep-tx').value = '';
+        n[12] = 'FREE'; return n;
     }
 
     async function withdraw() {
         const amt = parseFloat(document.getElementById('wd-amt').value), ph = document.getElementById('wd-phone').value;
         if(!amt || !ph) return Swal.fire('ስህተት', 'መረጃ ይሙሉ', 'error');
-        
-        // በቂ ባላንስ መኖሩን እዚህም ቼክ እናደርጋለን
-        if (amt > user.balance) {
-            return Swal.fire('ማሳሰቢያ', 'በቂ ባላንስ የለዎትም!', 'warning');
-        }
-
+        if (amt > user.balance) return Swal.fire('ማሳሰቢያ', 'በቂ ባላንስ የለዎትም!', 'warning');
         await fetch('/api/wallet', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone: user.phone, type: 'withdraw', amount: amt, method: 'Telebirr', wdPhone: ph })});
         Swal.fire('ተልኳል', 'የማውጣት ጥያቄው ደርሷል!', 'success');
         document.getElementById('wd-amt').value = '';
     }
+
+    // Initialize balance sync on load
+    window.onload = syncBalance;
 </script>
 </body>
 </html>
