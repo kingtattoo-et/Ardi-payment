@@ -1,62 +1,174 @@
 <!DOCTYPE html>
-<html>
+<html lang="am">
 <head>
-  <title>Ardi Bingo Game</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    /* የimage_2.png የጨዋታ ስታይል እዚህ ጋር ጨምር */
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ardi Bingo</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+        }
+        /* Stake Page Style (Image 1 & 2) */
+        #stake-container {
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            padding: 20px;
+        }
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .stake-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 150px;
+        }
+        .btn-confirm {
+            background-color: #eee;
+            border: 1px solid #999;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        /* Card Grid Style */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+            background-color: #6a1b9a;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .card-num {
+            background-color: #e67e22;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .card-num.selected {
+            background-color: #2ecc71; /* ለመረጥካቸው ካርታዎች */
+            border: 2px solid white;
+        }
+        /* Timer Style */
+        #timer-display {
+            font-size: 20px;
+            color: red;
+            font-weight: bold;
+            margin: 10px 0;
+            display: none;
+        }
+        /* Game Page (Image 3) - Hidden initially */
+        #game-container {
+            display: none;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
 
-  <div id="stake_page">
-    <h2>Stake (ዳር ማስያዝ)</h2>
-    <input type="number" id="stake_amount" placeholder="Stake Amount">
-    <button onclick="confirmStake()">Confirm Stake</button>
-  </div>
+    <div id="stake-container">
+        <div class="header-title">Stake (ዳር ማስያዝ)</div>
+        
+        <div class="stake-box">
+            <input type="number" id="stakeInput" placeholder="Stake Amount" value="10">
+            <button class="btn-confirm" onclick="startProcess()">Confirm Stake</button>
+        </div>
 
-  <div id="game_page" style="display: none;">
-    <h2>Game Area</h2>
-    <div id="countdown">60</div> </div>
+        <div id="timer-display">ጨዋታው ለመጀመር፡ <span id="seconds">60</span> ሰከንድ ቀርቷል</div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // አፑን ሙሉ ስክሪን እንዲሆን
+        <div class="card-grid" id="cardGrid">
+            </div>
+        
+        <p style="margin-top:15px; font-size: 14px;">ደራሽ: <span id="derashVal">0.00</span> ETB</p>
+    </div>
 
-    // ቆጠራውን ለማስጀመር
-    function startCountdown() {
-      var time = 60;
-      var countdown = document.getElementById("countdown");
-      
-      var timer = setInterval(function() {
-        if (time == 0) {
-          clearInterval(timer);
-          // ቆጠራው ሲያልቅ ወደ ጨዋታው ገጽ (image_3.png) ቀጥታ ይወስዳል
-          document.getElementById("stake_page").style.display = "none";
-          document.getElementById("game_page").style.display = "block";
-          // የቢንጎ ጨዋታውን እዚህ ጋር ጀምር
+    <div id="game-container">
+        <h2 style="color: #6a1b9a;">Ardi Bingo - ጨዋታው ተጀምሯል!</h2>
+        <div style="background: #2c3e50; color: white; padding: 50px;">
+            የቢንጎ ሰሌዳ እዚህ ጋር ይመጣል...
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let selectedCards = 0;
+        const stakeInput = document.getElementById('stakeInput');
+        const derashVal = document.getElementById('derashVal');
+
+        // ካርታዎችን መፍጠር (1-130)
+        const grid = document.getElementById('cardGrid');
+        for (let i = 1; i <= 130; i++) {
+            let div = document.createElement('div');
+            div.className = 'card-num';
+            div.innerText = i;
+            div.onclick = function() {
+                this.classList.toggle('selected');
+                calculateDerash();
+            };
+            grid.appendChild(div);
         }
-        countdown.innerHTML = time;
-        time--;
-      }, 1000);
-    }
 
-    // የዳር ማስያዣውን ለማረጋገጥ
-    function confirmStake() {
-      // ተጠቃሚው ያስገባውን ዳር (stake amount) ለማግኘት
-      var stakeAmount = document.getElementById("stake_amount").value;
-      
-      // የሂሳብ ስሌት፡ derash = (stakeAmount * 0.85 * selected_cards)
-      // selected_cards የሚለውን ከቢንጎ ጨዋታው ማግኘት አለብህ
-      var selectedCards = 1; // ይህንን በጨዋታህ መሰረት ቀይረው
-      var derash = (stakeAmount * 0.85 * selectedCards).toFixed(2);
-      
-      // ተጠቃሚው ያስገባውን ዳር እና ደራሹን በቴሌግራም ቦት መላክ ትችላለህ
-      // ይህንን በ API በኩል ማድረግ ይቻላል
+        function calculateDerash() {
+            selectedCards = document.querySelectorAll('.selected').length;
+            let stake = parseFloat(stakeInput.value) || 0;
+            // ስሌት: stake * 0.85 * selected_cards
+            let total = stake * 0.85 * selectedCards;
+            derashVal.innerText = total.toFixed(2);
+        }
 
-      // ቆጠራውን ጀምር
-      startCountdown();
-    }
-  </script>
+        function startProcess() {
+            if (selectedCards === 0) {
+                alert("እባክዎ መጀመሪያ ካርታ ይምረጡ!");
+                return;
+            }
+            
+            document.getElementById('timer-display').style.display = 'block';
+            let timeLeft = 60;
+            const timerSpan = document.getElementById('seconds');
+
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerSpan.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    goToGame();
+                }
+            }, 1000);
+        }
+
+        function goToGame() {
+            document.getElementById('stake-container').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            // እዚህ ጋር ጨዋታውን የሚቀሰቅስ logic መፃፍ ትችላለህ
+        }
+
+        stakeInput.oninput = calculateDerash;
+    </script>
 </body>
 </html>
