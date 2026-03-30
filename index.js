@@ -1,455 +1,223 @@
-// Game state
-let gameState = {
-    userId: null,
-    gameId: null,
-    stake: 0,
-    balance: 0,
-    bingoCard: [],
-    calledNumbers: [],
-    markedNumbers: [],
-    timer: null,
-    timeLeft: 60,
-    patternsCompleted: 0,
-    gameActive: true,
-    stakeDeducted: false  // Stake ቀንሶ መሆኑን ለማስታወስ
-};
+const { Telegraf, Markup } = require('telegraf');
+const express = require('express');
+const fs = require('fs');
 
-// Initialize game
-async function initGame() {
-    // Get URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    gameState.userId = urlParams.get('userId');
-    gameState.gameId = urlParams.get('gameId');
-    gameState.stake = parseInt(urlParams.get('stake')) || 10;
-    
-    document.getElementById('gameId').textContent = gameState.gameId || '---';
-    document.getElementById('stake').textContent = `${gameState.stake} ETB`;
-    
-    // Fetch user balance from server
-    await fetchUserBalance();
-    
-    // ጨዋታ ሲጀመር Stake ቀንስ
-    await deductStake();
-    
-    // Generate bingo card with 100 numbers (10x10 grid)
-    generateBingoCard();
-    
-    // Start 60 second timer
-    startTimer();
-    
-    // Start auto number calling
-    startAutoNumberCalling();
-    
-    showMessage(`🎮 Game started! Stake: ${gameState.stake} ETB deducted. Good luck!`, 'success');
+const app = express();
+app.get('/', (req, res) => res.send('Ardi Bingo is LIVE!'));
+app.listen(process.env.PORT || 10000);
+
+const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
+
+const DB_FILE = './database.json';
+let players = {};
+
+if (fs.existsSync(DB_FILE)) {
+    try { players = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (e) { players = {}; }
 }
 
-// Fetch user balance from Telegram bot server
-async function fetchUserBalance() {
-    try {
-        const response = await fetch(`/api/user/${gameState.userId}`);
-        const data = await response.json();
-        if (data.success) {
-            gameState.balance = data.balance;
-            document.getElementById('balance').textContent = `${gameState.balance.toFixed(2)} ETB`;
-            console.log(`💰 Balance fetched: ${gameState.balance} ETB`);
-        } else {
-            console.error('User not found');
-        }
-    } catch (error) {
-        console.error('Error fetching balance:', error);
-    }
+function saveToDB() {
+    fs.writeFileSync(DB_FILE, JSON.stringify(players, null, 4));
 }
 
-// Deduct stake when game starts
-async function deductStake() {
-    if (gameState.stakeDeducted) return;
-    
-    try {
-        const response = await fetch('/api/game/result', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                userId: gameState.userId,
-                gameId: gameState.gameId,
-                won: false,
-                amount: 0
-            })
-        });
+const ADMIN_ID = 1046142540; 
+const LOGO_URL = 'https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png';
+const WIN_PATTERN_URL = 'https://kingtattoo-et.github.io/Ardi-payment/win%20pattern.jpg';
+
+// --- የሊንክ ማስተካከያ እዚህ ጋር ነው ---
+const GAME_URL = 'https://kingtattoo-et.github.io/Ardi-payment/game.html'; 
+const PAYMENT_WEB_URL = 'https://kingtattoo-et.github.io/Ardi-payment/payment.html';
+
+const instructionText = `እንኮን ወደ አርዲ ቢንጎ መጡ
+
+1 ለመጫወት ወደቦቱ ሲገቡ register የሚለውን በመንካት ስልክ ቁጥሮትን ያጋሩ
+2 menu ውስጥ በመግባት deposit fund የሚለውን በመንካት በሚፈልጉት የባንክ አካውንት ገንዘብ ገቢ ያድርጉ 
+3 menu ውስጥ በመግባት start play የሚለውን በመንካት መወራረድ የሚፈልጉበትን የብር መጠን ይምረጡ።
+
+1 ወደጨዋታው እድገቡ ከሚመጣሎት 100 የመጫወቻ ቁጥሮች መርጠው accept የሚለውን በመንካት የቀጥሉ
+2 ጨዋታው ለመጀመር የተሰጠውን ጊዜ ሲያልቅ ቁጥሮች መውጣት ይጀምራል
+3 የሚወጡት ቁጥሮች የመረጡት ካርቴላ ላይ መኖሩን እያረጋገጡ ያቅልሙ
+4 ያቀለሙት አንድ መስመር ወይንም አራት ጠርዝ ላይ ሲመጣ ቢንጎ በማለት ማሸነፍ የችላሉ
+ —አንድ መስመር ማለት
+    አንድ ወደጎን ወይንም ወደታች ወይንም ዲያጎናል ሲዘጉ
+ — አራት ጠርዝ ልይ ሲመጣሎት 
+
+5 እነዚህ ማሸነፊያ ቁጥሮች ሳይመጣሎት bingo እሚለውን ከነኩ ከጨዋታው ይባረራሉ
+
+📝ስለሆነም እንዚህን ማሳሰቢያዎች ተመልክተው እንዲጠቀሙበት ካርቴላ ቢንጎ ያሳስባል`;
+
+bot.start((ctx) => {
+    const userId = ctx.from.id;
+    const referrerId = ctx.payload;
+
+    if (!players[userId]) {
+        players[userId] = { 
+            balance: 0, 
+            bonus: 0, 
+            name: ctx.from.first_name, 
+            username: ctx.from.username || "User", 
+            phone: null,
+            state: null
+        };
         
-        const data = await response.json();
-        if (data.success) {
-            gameState.balance = data.newBalance;
-            document.getElementById('balance').textContent = `${gameState.balance.toFixed(2)} ETB`;
-            gameState.stakeDeducted = true;
-            console.log(`💰 Stake deducted: ${gameState.stake} ETB. New balance: ${gameState.balance} ETB`);
+        if (referrerId && players[referrerId]) {
+            players[referrerId].bonus += 5;
+            bot.telegram.sendMessage(referrerId, `🎁 አዲስ ሰው ስለጋበዙ 5 ETB ቦነስ ተጨምሮልዎታል!`);
         }
-    } catch (error) {
-        console.error('Error deducting stake:', error);
+        saveToDB();
     }
-}
 
-// Update balance on server after win
-async function updateGameResult(won, amount) {
-    try {
-        const response = await fetch('/api/game/result', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                userId: gameState.userId,
-                gameId: gameState.gameId,
-                won: won,
-                amount: amount
-            })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            gameState.balance = data.newBalance;
-            document.getElementById('balance').textContent = `${gameState.balance.toFixed(2)} ETB`;
-            console.log(`💰 Balance updated: ${gameState.balance} ETB`);
-        }
-        return data;
-    } catch (error) {
-        console.error('Error updating game result:', error);
+    if (!players[userId].phone) {
+        return ctx.replyWithMarkdown(`👋 *እንኳን ወደ Ardi Bingo በሰላም መጡ!*\n\nለመቀጠል እባክዎ ከታች ያለውን ቁልፍ ተጭነው ስልክዎን ያጋሩ።`,
+            Markup.keyboard([[Markup.button.contactRequest('📲 ስልክ ቁጥርዎን ያጋሩ')]]).resize().oneTime()
+        );
     }
-}
+    return showMainMenu(ctx);
+});
 
-// Generate 100 numbers bingo card (10x10 grid)
-function generateBingoCard() {
-    // Create numbers 1-100
-    const numbers = [];
-    for (let i = 1; i <= 100; i++) {
-        numbers.push(i);
-    }
-    
-    // Shuffle numbers
-    for (let i = numbers.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
-    }
-    
-    // Take first 100 numbers for the card (10x10 grid)
-    gameState.bingoCard = numbers.slice(0, 100);
-    gameState.markedNumbers = new Array(100).fill(false);
-    
-    renderBingoCard();
-}
+bot.on('contact', (ctx) => {
+    const userId = ctx.from.id;
+    players[userId].phone = ctx.message.contact.phone_number;
+    saveToDB();
+    ctx.reply('✅ ተመዝግበዋል!', Markup.removeKeyboard());
+    return showMainMenu(ctx);
+});
 
-// Render bingo card (10x10 grid)
-function renderBingoCard() {
-    const grid = document.getElementById('bingoGrid');
-    grid.innerHTML = '';
-    
-    gameState.bingoCard.forEach((number, index) => {
-        const cell = document.createElement('div');
-        cell.className = 'card-cell';
-        if (gameState.markedNumbers[index]) {
-            cell.classList.add('marked');
-        }
-        cell.textContent = number;
-        cell.onclick = () => markNumber(index);
-        grid.appendChild(cell);
+function showMainMenu(ctx) {
+    const userId = ctx.from.id;
+    const balance = players[userId].balance || 0;
+    const bonus = players[userId].bonus || 0;
+    const total = balance + bonus;
+
+    return ctx.replyWithPhoto({ url: LOGO_URL }, {
+        caption: `🎮 *Welcome To Ardi Bingo!* 🎮\n\n💰 ባላንስዎ: *${total.toFixed(2)} ETB*`,
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+            [Markup.button.callback('🎮 Play Now', 'play')],
+            [Markup.button.callback('💰 Check Balance', 'balance'), Markup.button.callback('💵 Make a Deposit', 'deposit')],
+            [Markup.button.callback('🏆 Win Patterns', 'win_patterns'), Markup.button.callback('📕 Instructions', 'instructions')],
+            [Markup.button.callback('✉️ Invite', 'invite'), Markup.button.callback('👤 Change Username', 'change_username')],
+            [Markup.button.callback('📞 Support', 'support'), Markup.button.callback('🏅 Leaderboard', 'leaderboard')]
+        ])
     });
 }
 
-// Mark a number on the card
-function markNumber(index) {
-    if (!gameState.gameActive) {
-        showMessage('⏰ Game is over! Start a new game to play again.', 'warning');
-        return;
-    }
-    
-    const number = gameState.bingoCard[index];
-    
-    if (!gameState.markedNumbers[index] && gameState.calledNumbers.includes(number)) {
-        gameState.markedNumbers[index] = true;
-        renderBingoCard();
-        
-        // Add win animation
-        const cells = document.querySelectorAll('.card-cell');
-        if (cells[index]) {
-            cells[index].classList.add('win-animation');
-            setTimeout(() => {
-                if (cells[index]) cells[index].classList.remove('win-animation');
-            }, 500);
-        }
-        
-        showMessage(`✅ Number ${number} marked!`, 'success');
-    } else if (!gameState.calledNumbers.includes(number)) {
-        showMessage(`⚠️ Number ${number} hasn't been called yet!`, 'warning');
-    } else if (gameState.markedNumbers[index]) {
-        showMessage(`ℹ️ Number ${number} already marked!`, 'info');
-    }
-}
-
-// Call a random number
-function callNumber() {
-    if (!gameState.gameActive) return;
-    
-    if (gameState.calledNumbers.length >= 100) {
-        showMessage('🎉 All numbers have been called! Game over!', 'success');
-        endGame(false);
-        return;
-    }
-    
-    let number;
-    do {
-        number = Math.floor(Math.random() * 100) + 1;
-    } while (gameState.calledNumbers.includes(number));
-    
-    gameState.calledNumbers.push(number);
-    renderCalledNumbers();
-    
-    // Animate the call
-    showMessage(`🎲 Number called: ${number}!`, 'info');
-    
-    // Flash effect
-    const timerDiv = document.querySelector('.timer');
-    if (timerDiv) {
-        timerDiv.style.animation = 'pulse 0.3s ease-in-out';
-        setTimeout(() => {
-            if (timerDiv) timerDiv.style.animation = '';
-        }, 300);
-    }
-}
-
-// Render called numbers
-function renderCalledNumbers() {
-    const container = document.getElementById('calledNumbers');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    gameState.calledNumbers.slice(-30).forEach(number => {
-        const badge = document.createElement('div');
-        badge.className = 'number-badge';
-        badge.textContent = number;
-        container.appendChild(badge);
+bot.action('play', (ctx) => {
+    ctx.answerCbQuery();
+    return ctx.reply("🕹 *ለመጫወት የሚፈልጉትን የገንዘብ መጠን ይምረጡ!*\n\n*ብዙ የተጫወቱ ብዙ ያሸንፉ!!*", {
+        parse_mode: 'Markdown',
+        ...Markup.inlineKeyboard([
+            [Markup.button.webApp('💎 10 Birr', GAME_URL), Markup.button.webApp('💎 20 Birr', GAME_URL)],
+            [Markup.button.webApp('🔥 50 Birr', GAME_URL), Markup.button.webApp('🔥 100 Birr', GAME_URL)],
+            [Markup.button.callback('⬅️ ወደ ዋና ማውጫ', 'main_menu')]
+        ])
     });
-}
+});
 
-// Start 60 second timer
-function startTimer() {
-    if (gameState.timer) {
-        clearInterval(gameState.timer);
-    }
-    
-    gameState.timeLeft = 60;
-    updateTimerDisplay();
-    
-    gameState.timer = setInterval(() => {
-        if (!gameState.gameActive) return;
-        
-        gameState.timeLeft--;
-        updateTimerDisplay();
-        
-        if (gameState.timeLeft <= 0) {
-            // Time's up - call a new number
-            callNumber();
-            gameState.timeLeft = 60;
-            updateTimerDisplay();
-        }
-    }, 1000);
-}
+bot.action('main_menu', (ctx) => {
+    ctx.answerCbQuery();
+    return showMainMenu(ctx);
+});
 
-// Update timer display (MM:SS format)
-function updateTimerDisplay() {
-    const minutes = Math.floor(gameState.timeLeft / 60);
-    const seconds = gameState.timeLeft % 60;
-    const timerElement = document.getElementById('timer');
-    if (timerElement) {
-        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-}
+bot.action('balance', (ctx) => {
+    const userId = ctx.from.id;
+    const user = players[userId];
+    const msg = `<code>Username:     ${user.username || user.name}\nBalance:      ${(user.balance || 0).toFixed(2)} ETB\nbonus:        ${(user.bonus || 0).toFixed(2)}</code>`;
+    ctx.answerCbQuery();
+    return ctx.replyWithHTML(msg);
+});
 
-// Start auto number calling
-function startAutoNumberCalling() {
-    // First call after 5 seconds
-    setTimeout(() => {
-        if (gameState.gameActive && gameState.calledNumbers.length === 0) {
-            callNumber();
-        }
-    }, 5000);
-}
+bot.action('win_patterns', (ctx) => {
+    ctx.answerCbQuery();
+    return ctx.replyWithPhoto({ url: WIN_PATTERN_URL }, { caption: "🏆 *Ardi Bingo Win Patterns*\nእነዚህን ምልክቶች በመዝጋት ማሸነፍ ይችላሉ።", parse_mode: 'Markdown' });
+});
 
-// Check patterns
-function checkPattern(patternType) {
-    if (!gameState.gameActive) {
-        showMessage('⏰ Game is over! Start a new game to play again.', 'warning');
-        return;
-    }
-    
-    let completed = false;
-    let winAmount = 0;
-    
-    switch(patternType) {
-        case 'line':
-            completed = checkLinePattern();
-            winAmount = gameState.stake * 2;
-            break;
-        case 'corners':
-            completed = checkFourCorners();
-            winAmount = gameState.stake * 3;
-            break;
-        case 'full':
-            completed = checkFullHouse();
-            winAmount = gameState.stake * 10;
-            break;
-        case 'x':
-            completed = checkXPattern();
-            winAmount = gameState.stake * 5;
-            break;
-    }
-    
-    if (completed) {
-        gameState.patternsCompleted++;
-        document.getElementById('patternsCompleted').textContent = gameState.patternsCompleted;
-        
-        showMessage(`🎉 BINGO! You completed ${patternType} pattern! Won ${winAmount} ETB! 🎉`, 'success');
-        
-        // Update balance and send to server
-        updateGameResult(true, winAmount);
-        
-        // Check if game should end after 3 patterns
-        if (gameState.patternsCompleted >= 3) {
-            showMessage('🏆 You completed 3 patterns! Game completed! 🏆', 'success');
-            endGame(true);
-        }
-    } else {
-        showMessage(`❌ ${patternType} pattern not completed yet. Keep playing!`, 'warning');
-    }
-}
+bot.action('change_username', (ctx) => {
+    const userId = ctx.from.id;
+    players[userId].state = 'WAITING_FOR_USERNAME';
+    saveToDB();
+    ctx.answerCbQuery();
+    return ctx.reply("📝 እባክዎ አዲሱን መለያ ስም (Username) ያስገቡ፡");
+});
 
-// Check line pattern (horizontal, vertical, diagonal) on 10x10 grid
-function checkLinePattern() {
-    // Check rows (10 rows)
-    for (let i = 0; i < 10; i++) {
-        let rowComplete = true;
-        for (let j = 0; j < 10; j++) {
-            if (!gameState.markedNumbers[i * 10 + j]) {
-                rowComplete = false;
-                break;
+bot.action('support', (ctx) => {
+    ctx.answerCbQuery();
+    return ctx.reply('ማንኛውንም ጥያቄ እዚህ ያቅርቡ፡ @ArdiiiBingoBot');
+});
+
+bot.action('invite', (ctx) => {
+    const inviteLink = `https://t.me/${ctx.botInfo.username}?start=${ctx.from.id}`;
+    ctx.answerCbQuery();
+    return ctx.reply(`✉️ ጓደኞችዎን ይጋብዙ እና በእያንዳንዱ ሰው 5 ብር ቦነስ ያግኙ!\n\nየእርስዎ መጋበዣ ሊንክ፡\n${inviteLink}`);
+});
+
+bot.action('instructions', (ctx) => {
+    ctx.answerCbQuery();
+    return ctx.reply(instructionText);
+});
+
+bot.action('deposit', (ctx) => {
+    ctx.answerCbQuery();
+    return ctx.replyWithMarkdown('`Deposit Amount` \n*Min: 50 ETB*\n\nማስገባት የሚፈልጉትን መጠን በቁጥር ብቻ ይላኩ (ለምሳሌ፦ 100)');
+});
+
+bot.on('text', async (ctx) => {
+    const userId = ctx.from.id;
+    const msgText = ctx.message.text;
+
+    if (players[userId]?.state === 'WAITING_FOR_USERNAME') {
+        players[userId].username = msgText;
+        players[userId].state = null;
+        saveToDB();
+        return ctx.reply(`✅ መለያ ስምዎ ወደ *${msgText}* ተቀይሯል!`, { parse_mode: 'Markdown' });
+    }
+
+    if (!isNaN(msgText) && parseInt(msgText) >= 50) {
+        players[userId].tempAmount = parseInt(msgText);
+        saveToDB();
+        return ctx.replyWithMarkdown(`የመረጡት መጠን: *${msgText} ETB*\n\nከታች ያለውን **"Manual-Payment"** ቁልፍ ተጭነው ይክፈሉ፡`, 
+            Markup.keyboard([[Markup.button.webApp('💳 Manual-Payment', PAYMENT_WEB_URL)]]).resize().oneTime()
+        );
+    }
+});
+
+bot.on('web_app_data', async (ctx) => {
+    try {
+        const userId = ctx.from.id;
+        const rawData = ctx.webAppData.data.json();
+        const webData = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+        const amount = players[userId]?.tempAmount || 50;
+
+        await ctx.reply('✅ እናመሰግናለን! መረጃው ለአድሚን ተልኳል።', Markup.removeKeyboard());
+
+        return bot.telegram.sendMessage(ADMIN_ID, 
+            `🔔 *አዲስ የክፍያ ጥያቄ*\n\n👤 ተጠቃሚ: ${players[userId].username || ctx.from.first_name}\n📞 ስልክ: ${players[userId].phone || 'ያልታወቀ'}\n💰 መጠን: *${amount} ETB*\n🏦 ባንክ: *${webData.bank}*\n\n📝 *SMS:* \`${webData.message}\``, 
+            {
+                parse_mode: 'Markdown',
+                ...Markup.inlineKeyboard([
+                    [Markup.button.callback(`✅ Approve ${amount} ETB`, `approve_${userId}_${amount}`)],
+                    [Markup.button.callback('❌ Cancel', `cancel_${userId}`)]
+                ])
             }
-        }
-        if (rowComplete) return true;
+        );
+    } catch (e) {
+        ctx.reply("⚠️ ስህተት ተፈጥሯል፣ ድጋሚ ይሞክሩ።");
     }
-    
-    // Check columns (10 columns)
-    for (let j = 0; j < 10; j++) {
-        let colComplete = true;
-        for (let i = 0; i < 10; i++) {
-            if (!gameState.markedNumbers[i * 10 + j]) {
-                colComplete = false;
-                break;
-            }
-        }
-        if (colComplete) return true;
-    }
-    
-    // Check main diagonal
-    let diagComplete = true;
-    for (let i = 0; i < 10; i++) {
-        if (!gameState.markedNumbers[i * 10 + i]) {
-            diagComplete = false;
-            break;
-        }
-    }
-    if (diagComplete) return true;
-    
-    // Check other diagonal
-    diagComplete = true;
-    for (let i = 0; i < 10; i++) {
-        if (!gameState.markedNumbers[i * 10 + (9 - i)]) {
-            diagComplete = false;
-            break;
-        }
-    }
-    
-    return diagComplete;
-}
+});
 
-// Check four corners
-function checkFourCorners() {
-    const corners = [0, 9, 90, 99];
-    return corners.every(index => gameState.markedNumbers[index]);
-}
+bot.action(/approve_(\d+)_(\d+)/, async (ctx) => {
+    const targetId = ctx.match[1];
+    const amount = parseInt(ctx.match[2]);
+    if (!players[targetId]) players[targetId] = { balance: 0, bonus: 0 };
+    players[targetId].balance += amount;
+    saveToDB();
+    await bot.telegram.sendMessage(targetId, `✅ ክፍያዎ ተረጋግጧል! *${amount} ETB* ባላንስዎ ላይ ተጨምሯል።`);
+    return ctx.editMessageText(`✅ ለ ID ${targetId} *${amount} ETB* አጽድቀሃል።`);
+});
 
-// Check full house (all numbers)
-function checkFullHouse() {
-    return gameState.markedNumbers.every(marked => marked === true);
-}
+bot.action(/cancel_(\d+)/, async (ctx) => {
+    const targetId = ctx.match[1];
+    await bot.telegram.sendMessage(targetId, `❌ ክፍያዎ በትክክል ስላልተፈጸመ ውድቅ ተደርጓል። እባክዎ በትክክለኛ መረጃ ድጋሚ ይሞክሩ።`);
+    return ctx.editMessageText(`❌ የ ID ${targetId} የክፍያ ጥያቄ ውድቅ ተደርጓል።`);
+});
 
-// Check X pattern (both diagonals)
-function checkXPattern() {
-    for (let i = 0; i < 10; i++) {
-        if (!gameState.markedNumbers[i * 10 + i]) return false;
-        if (!gameState.markedNumbers[i * 10 + (9 - i)]) return false;
-    }
-    return true;
-}
-
-// End game
-function endGame(won) {
-    if (!gameState.gameActive) return;
-    
-    gameState.gameActive = false;
-    
-    if (gameState.timer) {
-        clearInterval(gameState.timer);
-    }
-    
-    const messageDiv = document.getElementById('message');
-    if (won) {
-        messageDiv.textContent = '🎮 Game Completed! 🎮 Thank you for playing Ardi Bingo!';
-        messageDiv.style.background = '#d4edda';
-        messageDiv.style.color = '#155724';
-    } else {
-        messageDiv.textContent = '⏰ Time\'s up! Game Over! Start a new game to play again!';
-        messageDiv.style.background = '#f8d7da';
-        messageDiv.style.color = '#721c24';
-    }
-    
-    messageDiv.classList.add('game-over');
-    
-    // Close web app after 5 seconds
-    setTimeout(() => {
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.close();
-        }
-    }, 5000);
-}
-
-// Show message
-function showMessage(msg, type) {
-    const messageDiv = document.getElementById('message');
-    if (!messageDiv) return;
-    
-    messageDiv.textContent = msg;
-    
-    if (type === 'success') {
-        messageDiv.style.background = '#d4edda';
-        messageDiv.style.color = '#155724';
-    } else if (type === 'warning') {
-        messageDiv.style.background = '#fff3cd';
-        messageDiv.style.color = '#856404';
-    } else {
-        messageDiv.style.background = '#e3f2fd';
-        messageDiv.style.color = '#0d47a1';
-    }
-    
-    // Auto-clear after 3 seconds
-    setTimeout(() => {
-        if (messageDiv.textContent === msg && gameState.gameActive) {
-            messageDiv.textContent = '🎮 Click on numbers as they\'re called!';
-            messageDiv.style.background = '#e3f2fd';
-            messageDiv.style.color = '#0d47a1';
-        }
-    }, 3000);
-}
-
-// Start the game when page loads
-window.addEventListener('load', initGame);
+bot.launch().then(() => console.log("🚀 ቦቱ ተስተካክሎ ተነስቷል!"));
