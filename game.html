@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="telegram-web-app" content="yes">
-    <title>Cartela Bingo - Live Game</title>
+    <title>Ardi Bingo - Live Game</title>
     <style>
         * {
             margin: 0;
@@ -14,13 +14,13 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #1a472a 0%, #0f2b1a 100%);
             min-height: 100vh;
             padding: 16px;
         }
 
         .container {
-            max-width: 500px;
+            max-width: 550px;
             margin: 0 auto;
             background: white;
             border-radius: 24px;
@@ -29,15 +29,21 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
+            background: linear-gradient(135deg, #d4af37 0%, #f4c542 100%);
+            color: #1a472a;
             padding: 20px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
         }
 
         .game-info {
@@ -45,71 +51,83 @@
             padding: 15px;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 12px;
             border-bottom: 1px solid #e0e0e0;
         }
 
         .info-card {
             background: white;
-            padding: 10px;
+            padding: 12px;
             border-radius: 12px;
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .info-label {
             font-size: 11px;
-            color: #666;
-            margin-bottom: 4px;
+            color: #888;
+            margin-bottom: 6px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .info-value {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
-            color: #333;
+            color: #1a472a;
         }
 
         .timer-section {
             background: #fff3cd;
-            padding: 20px;
+            padding: 24px;
             text-align: center;
             border-bottom: 2px solid #ffc107;
         }
 
         .timer {
-            font-size: 56px;
+            font-size: 64px;
             font-weight: bold;
             color: #dc3545;
-            font-family: monospace;
-            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 4px;
         }
 
         .timer-label {
-            font-size: 12px;
+            font-size: 13px;
             color: #856404;
-            margin-top: 5px;
+            margin-top: 8px;
+            font-weight: 500;
         }
 
         .bingo-card {
             padding: 20px;
+            background: white;
+        }
+
+        .bingo-card h3 {
+            font-size: 18px;
+            color: #1a472a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            margin-top: 15px;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            margin-top: 10px;
         }
 
         .card-cell {
             aspect-ratio: 1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
+            background: linear-gradient(135deg, #2a6230 0%, #1a472a 100%);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
             color: white;
             cursor: pointer;
@@ -118,14 +136,14 @@
         }
 
         .card-cell.marked {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #d4af37 0%, #f4c542 100%);
+            color: #1a472a;
             text-decoration: line-through;
-            opacity: 0.8;
-            transform: scale(0.98);
+            transform: scale(0.95);
         }
 
         .card-cell:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
 
         .called-numbers {
@@ -134,17 +152,22 @@
             border-top: 1px solid #e0e0e0;
         }
 
+        .called-numbers h3 {
+            font-size: 16px;
+            color: #1a472a;
+            margin-bottom: 12px;
+        }
+
         .numbers-list {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 10px;
-            max-height: 120px;
+            max-height: 100px;
             overflow-y: auto;
         }
 
         .number-badge {
-            background: #28a745;
+            background: #2a6230;
             color: white;
             padding: 6px 12px;
             border-radius: 20px;
@@ -153,50 +176,53 @@
         }
 
         .patterns {
-            background: #e7f3ff;
+            background: #e8f5e9;
             padding: 20px;
-            border-top: 1px solid #2196f3;
+            border-top: 1px solid #4caf50;
+        }
+
+        .patterns h3 {
+            font-size: 16px;
+            color: #1a472a;
+            margin-bottom: 12px;
         }
 
         .pattern-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
         }
 
         .pattern-btn {
-            background: #2196f3;
+            background: #2a6230;
             color: white;
             border: none;
-            padding: 10px 16px;
+            padding: 12px;
             border-radius: 12px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 14px;
+            font-weight: 600;
             transition: all 0.2s ease;
-            flex: 1;
-            min-width: 100px;
         }
 
         .pattern-btn:active {
             transform: scale(0.96);
-            background: #1976d2;
+            background: #1a472a;
         }
 
         .message-area {
-            background: #d4edda;
-            color: #155724;
+            background: #e3f2fd;
+            color: #0d47a1;
             padding: 15px;
             text-align: center;
-            border-top: 1px solid #28a745;
+            border-top: 1px solid #2196f3;
             font-weight: 500;
             font-size: 14px;
         }
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); background: gold; }
+            50% { transform: scale(1.08); background: #ffc107; color: #1a472a; }
         }
 
         @keyframes slideIn {
@@ -217,38 +243,78 @@
         .number-called {
             animation: slideIn 0.3s ease-out;
         }
+
+        .game-over {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 550px) {
+            .card-cell {
+                font-size: 10px;
+            }
+            .timer {
+                font-size: 48px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Cartela Bingo</h1>
+            <h1>🎯 Ardi Bingo</h1>
             <p>Every Square Counts!</p>
         </div>
 
         <div class="game-info">
             <div class="info-card">
-                <div class="info-label">Game ID</div>
-                <div class="info-value" id="gameId">---</div>
+                <div class="info-label">GAME ID</div>
+                <div class="info-value" id="gameId">--</div>
             </div>
             <div class="info-card">
-                <div class="info-label">Stake</div>
+                <div class="info-label">STAKE</div>
                 <div class="info-value" id="stake">0 ETB</div>
             </div>
             <div class="info-card">
-                <div class="info-label">Balance</div>
+                <div class="info-label">BALANCE</div>
                 <div class="info-value" id="balance">0 ETB</div>
             </div>
             <div class="info-card">
-                <div class="info-label">Patterns</div>
+                <div class="info-label">PATTERNS</div>
                 <div class="info-value" id="patternsCompleted">0</div>
             </div>
         </div>
 
         <div class="timer-section">
-            <div class="timer" id="timer">00:30</div>
+            <div class="timer" id="timer">01:00</div>
             <div class="timer-label">Next Number Called In</div>
         </div>
 
         <div class="bingo-card">
-            <h3>
+            <h3>🎲 Your Bingo Card (1-100)</h3>
+            <div class="card-grid" id="bingoGrid"></div>
+        </div>
+
+        <div class="called-numbers">
+            <h3>📢 Called Numbers</h3>
+            <div class="numbers-list" id="calledNumbers"></div>
+        </div>
+
+        <div class="patterns">
+            <h3>🏆 Check Your Patterns</h3>
+            <div class="pattern-buttons">
+                <button class="pattern-btn" onclick="checkPattern('line')">Line Pattern</button>
+                <button class="pattern-btn" onclick="checkPattern('corners')">Four Corners</button>
+                <button class="pattern-btn" onclick="checkPattern('full')">Full House</button>
+                <button class="pattern-btn" onclick="checkPattern('x')">X Pattern</button>
+            </div>
+        </div>
+
+        <div class="message-area" id="message">
+            🎮 Click on numbers as they're called!
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
