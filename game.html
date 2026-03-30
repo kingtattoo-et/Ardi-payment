@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ardi Bingo</title>
+    <title>Ardi Bingo - Selection</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -90,40 +90,42 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 1. Random Game ID
+        // 1. Game ID
         const gameID = Math.floor(100000 + Math.random() * 900000);
         document.getElementById('game-id-display').innerText = gameID;
 
-        // 2. Bet/Stake Sync - ከቦቱ የመጣውን Stake በቀጥታ ይወስዳል
+        // 2. Bet & Balance Sync from URL (Bot data)
         let currentStake = parseInt(urlParams.get('stake')) || 20;
-
-        // 3. Balance Sync - ቦቱ ላይ ያለውን ባላንስ (ለምሳሌ 500.00 ETB) በቀጥታ ሚኒ አፑ ላይ ካለው ጋር ያገናኛል
         let currentBalance = parseFloat(urlParams.get('balance')) || 0.00;
-
-        let purchasedCount = 0;
+        
+        let purchasedCardNum = null;
+        let derashFinal = 0;
         let gameStarted = false;
 
         function updateUI() {
-            let derash = purchasedCount * 0.85 * currentStake;
-            document.getElementById('derash-amount').innerText = Math.floor(derash) + " ETB";
-            
-            // ባላንሱን ከቦቱ ጋር እኩል ያደርገዋል
+            derashFinal = purchasedCardNum ? (0.85 * currentStake) : 0;
+            document.getElementById('derash-amount').innerText = Math.floor(derashFinal) + " ETB";
             document.getElementById('account-balance').innerText = currentBalance.toFixed(2);
             document.getElementById('bet-display').innerText = currentStake + " ETB";
             document.getElementById('preview-price').innerText = currentStake;
-            
-            // ካርቴላ ሲገዛ አክቲቭ 1 ይሆናል
-            document.getElementById('active-count').innerText = purchasedCount > 0 ? "1" : "0";
+            document.getElementById('active-count').innerText = purchasedCardNum ? "1" : "0";
         }
 
+        // Timer and Redirect Logic
         let timeLeft = 60;
         const timerInterval = setInterval(() => {
             if (timeLeft > 0) {
                 timeLeft--;
                 document.getElementById('timer-display').innerText = timeLeft;
-            } else if (!gameStarted) {
-                gameStarted = true;
-                document.getElementById('timer-status').innerText = "Running";
+            } else {
+                clearInterval(timerInterval);
+                if (purchasedCardNum) {
+                    // Redirect to gameplay with data
+                    window.location.href = `game_call.html?card=${purchasedCardNum}&stake=${currentStake}&derash=${Math.floor(derashFinal)}&balance=${currentBalance}`;
+                } else {
+                    tg.showAlert("ካርቴላ አልመረጡም! እባክዎ እንደገና ይሞክሩ።");
+                    tg.close();
+                }
             }
         }, 1000);
 
@@ -138,7 +140,11 @@
         }
 
         function openPreview(num) {
-            if (document.getElementById('card-' + num).classList.contains('purchased')) return;
+            // ከ3 ካርቴላ በላይ መግዛት አይቻልም (በመመሪያው መሰረት)
+            if (purchasedCardNum && purchasedCardNum !== num) {
+                tg.showAlert("በአንድ ጊዜ መግዛት የሚችሉት 1 ካርቴላ ብቻ ነው!");
+                return;
+            }
             document.getElementById('game-screen').style.display = 'block';
             createBoard();
             document.getElementById('final-buy-btn').onclick = () => {
@@ -151,21 +157,17 @@
         }
 
         function executePurchase(num) {
-            currentBalance -= currentStake; // ካርቴላ ሲገዛ ከባላንስ ይቀንሳል
-            purchasedCount++;
+            currentBalance -= currentStake;
+            purchasedCardNum = num;
+            
+            // Disable other buttons
+            const btns = document.querySelectorAll('.card-select-btn');
+            btns.forEach(b => b.classList.remove('purchased'));
             document.getElementById('card-' + num).classList.add('purchased');
+            
             updateUI();
             closeGameScreen();
             tg.HapticFeedback.impactOccurred('medium');
-            
-            // መረጃውን ለቦቱ መላክ
-            tg.sendData(JSON.stringify({
-                action: "buy", 
-                card: num, 
-                amount: currentStake, 
-                game: gameID,
-                balance: currentBalance
-            }));
         }
 
         function closeGameScreen() { document.getElementById('game-screen').style.display = 'none'; }
