@@ -330,7 +330,8 @@ let gameState = {
     timer: null,
     timeLeft: 60,
     patternsCompleted: 0,
-    gameActive: true
+    gameActive: true,
+    stakeDeducted: false  // Stake ቀንሶ መሆኑን ለማስታወስ
 };
 
 // Initialize game
@@ -347,6 +348,9 @@ async function initGame() {
     // Fetch user balance from server
     await fetchUserBalance();
     
+    // ጨዋታ ሲጀመር Stake ቀንስ
+    await deductStake();
+    
     // Generate bingo card with 100 numbers (10x10 grid)
     generateBingoCard();
     
@@ -355,6 +359,8 @@ async function initGame() {
     
     // Start auto number calling
     startAutoNumberCalling();
+    
+    showMessage(`🎮 Game started! Stake: ${gameState.stake} ETB deducted. Good luck!`, 'success');
 }
 
 // Fetch user balance from Telegram bot server
@@ -365,6 +371,7 @@ async function fetchUserBalance() {
         if (data.success) {
             gameState.balance = data.balance;
             document.getElementById('balance').textContent = `${gameState.balance.toFixed(2)} ETB`;
+            console.log(`💰 Balance fetched: ${gameState.balance} ETB`);
         } else {
             console.error('User not found');
         }
@@ -373,7 +380,37 @@ async function fetchUserBalance() {
     }
 }
 
-// Update balance on server after win/loss
+// Deduct stake when game starts
+async function deductStake() {
+    if (gameState.stakeDeducted) return;
+    
+    try {
+        const response = await fetch('/api/game/result', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: gameState.userId,
+                gameId: gameState.gameId,
+                won: false,
+                amount: 0
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            gameState.balance = data.newBalance;
+            document.getElementById('balance').textContent = `${gameState.balance.toFixed(2)} ETB`;
+            gameState.stakeDeducted = true;
+            console.log(`💰 Stake deducted: ${gameState.stake} ETB. New balance: ${gameState.balance} ETB`);
+        }
+    } catch (error) {
+        console.error('Error deducting stake:', error);
+    }
+}
+
+// Update balance on server after win
 async function updateGameResult(won, amount) {
     try {
         const response = await fetch('/api/game/result', {
@@ -393,6 +430,7 @@ async function updateGameResult(won, amount) {
         if (data.success) {
             gameState.balance = data.newBalance;
             document.getElementById('balance').textContent = `${gameState.balance.toFixed(2)} ETB`;
+            console.log(`💰 Balance updated: ${gameState.balance} ETB`);
         }
         return data;
     } catch (error) {
@@ -656,7 +694,7 @@ function checkLinePattern() {
 
 // Check four corners
 function checkFourCorners() {
-    const corners = [0, 9, 90, 99]; // Top-left, top-right, bottom-left, bottom-right
+    const corners = [0, 9, 90, 99];
     return corners.every(index => gameState.markedNumbers[index]);
 }
 
@@ -667,7 +705,6 @@ function checkFullHouse() {
 
 // Check X pattern (both diagonals)
 function checkXPattern() {
-    // Check both diagonals
     for (let i = 0; i < 10; i++) {
         if (!gameState.markedNumbers[i * 10 + i]) return false;
         if (!gameState.markedNumbers[i * 10 + (9 - i)]) return false;
