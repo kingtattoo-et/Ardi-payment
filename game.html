@@ -10,7 +10,6 @@
         :root { --primary: #7b1fa2; --secondary: #4a148c; --accent: #ff9800; --bg: #311b92; }
         body { font-family: 'Arial', sans-serif; background: #2c003e; color: white; margin: 0; padding: 0; text-align: center; overflow-x: hidden; }
         
-        /* Top Navigation Header */
         .header-top { background: var(--bg); padding: 5px; display: flex; justify-content: space-around; font-size: 0.65rem; border-bottom: 2px solid var(--accent); position: sticky; top: 0; z-index: 100; }
         .stat-box { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 8px; border: 1px solid #00d2ff; min-width: 55px; }
         .stat-box b { color: #00d2ff; font-size: 0.8rem; }
@@ -23,13 +22,10 @@
         .logo-area { margin: 5px auto; width: 50px; height: 50px; background: white; border-radius: 50%; padding: 5px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); }
         .logo-area img { width: 100%; border-radius: 50%; }
 
-        /* Card Selection Grid */
-        .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 10px; max-height: 50vh; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 0 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .selection-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 10px; max-height: 50vh; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; margin: 0 10px; }
         .card-select-btn { background: #e67e22; color: white; padding: 12px 2px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; border: none; cursor: pointer; box-shadow: 0 4px 0 #d35400; transition: 0.1s; }
-        .card-select-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d35400; }
         .card-select-btn.purchased { background: #2e7d32 !important; color: white !important; border: 2px solid #afffbc !important; box-shadow: none; }
         
-        /* Preview Modal */
         #game-screen { display: none; padding: 10px; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; }
         .bingo-card-container { background: #ffcc80; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 90%; max-width: 320px; border: 5px solid #ef6c00; }
         .bingo-header-letters { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
@@ -101,13 +97,13 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 1. Generate Game ID
         const gameID = Math.floor(100000 + Math.random() * 900000);
         document.getElementById('game-id-display').innerText = gameID;
 
-        // 2. STAKE & BALANCE SYNC (From Bot URL Parameters)
-        // ቦቱ ላይ የተመረጠው ስቴክ እዚህ ጋር በቀጥታ ይገባል
+        // የቦቱን ዳታ መቀበያ (Stake/Bet እና Wallet Balance)
+        // ቦቱ ላይ ተጫዋቹ የመረጠው Stake (10, 20, 50...) እዚህ ጋር በቀጥታ ይገባል
         let currentStake = parseInt(urlParams.get('stake')) || 20; 
+        // በቦቱ ላይ ያለው ባላንስ እዚህ ጋር በቀጥታ ይገባል
         let currentBalance = parseFloat(urlParams.get('balance')) || 0.00;
         
         let purchasedCardNum = null;
@@ -122,7 +118,6 @@
             document.getElementById('active-count').innerText = hasPurchased ? "1" : "0";
         }
 
-        // 3. Timer & Redirect Logic
         let timeLeft = 60;
         const timerInterval = setInterval(() => {
             if (timeLeft > 0) {
@@ -132,7 +127,7 @@
                 clearInterval(timerInterval);
                 if (hasPurchased) {
                     const derashVal = Math.floor(currentStake * 0.85);
-                    // ካርቴላ ገዝቶ ከሆነ ወደ ጨዋታው ይሸጋገራል
+                    // የቦቱን መረጃዎች ይዞ ወደ ጨዋታው ይሄዳል
                     window.location.href = `game_call.html?card=${purchasedCardNum}&stake=${currentStake}&derash=${derashVal}&balance=${currentBalance}`;
                 } else {
                     tg.showAlert("ጨዋታው ተጀምሯል! ካርቴላ ስላልገዙ በሚቀጥለው ዙር ይሳተፉ።");
@@ -140,7 +135,6 @@
             }
         }, 1000);
 
-        // 4. Generate Cards (1-130)
         const cardList = document.getElementById('card-list');
         for (let i = 1; i <= 130; i++) {
             const btn = document.createElement('button');
@@ -174,7 +168,6 @@
             purchasedCardNum = num;
             hasPurchased = true;
             
-            // የገዛውን ካርቴላ ምልክት ማድረግ
             document.getElementById('card-' + num).classList.add('purchased');
             updateUI();
             closeGameScreen();
@@ -183,12 +176,10 @@
 
         function closeGameScreen() { document.getElementById('game-screen').style.display = 'none'; }
 
-        // Bingo Card Preview Generator (No Duplicates)
         function createBoard() {
             const board = document.getElementById('board');
             board.innerHTML = '';
             const ranges = [[1,15],[16,30],[31,45],[46,60],[61,75]];
-            
             for(let r=0; r<5; r++) {
                 for(let c=0; c<5; c++) {
                     const cell = document.createElement('div');
@@ -204,8 +195,6 @@
                 }
             }
         }
-
-        // Initialize UI on load
         updateUI();
     </script>
 </body>
