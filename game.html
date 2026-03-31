@@ -3,422 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ardi Bingo</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Ardi Bingo - Manual Deposit</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { 
-            --primary-bg: #120422; 
-            --card-bg: #250a46; 
-            --gold: #ffcc00; 
-            --text: #ffffff; 
-            --green: #28a745; 
-            --red: #ff4d4d; 
-            --game-vibe: radial-gradient(circle, #2a1052 0%, #120422 100%);
-        }
+        :root { --primary-color: #27ae60; --secondary-color: #2c3e50; --bg-color: #f4f7f6; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 400px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); overflow: hidden; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         
-        body { font-family: sans-serif; background: var(--game-vibe); color: var(--text); margin: 0; overflow: hidden; height: 100vh; }
-        .app { width: 100%; max-width: 500px; height: 100vh; display: flex; flex-direction: column; margin: auto; position: relative; border: 1px solid rgba(255,204,0,0.3); }
-        .header { background: var(--card-bg); padding: 10px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; position: relative; z-index: 5; }
+        .header { background: var(--secondary-color); color: white; padding: 25px 15px; text-align: center; }
+        .header img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .header h2 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; }
+
+        .content { padding: 20px; }
+        .selection-title { color: #666; font-size: 0.9rem; margin-bottom: 20px; text-align: center; }
+
+        .bank-item { display: flex; align-items: center; padding: 15px; border: 2px solid #edf2f7; border-radius: 18px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s ease; background: #fff; }
+        .bank-item:hover { border-color: var(--primary-color); background: #f0fff4; transform: scale(1.02); }
+        .bank-item img { width: 50px; height: 50px; margin-right: 15px; object-fit: contain; border-radius: 8px; }
+        .bank-info { flex-grow: 1; text-align: left; }
+        .bank-info b { display: block; color: var(--secondary-color); font-size: 1.1rem; }
+        .bank-info span { font-size: 0.85rem; color: #888; }
+
+        .deposit-panel { display: none; text-align: center; }
+        .acc-box { background: #f8fafc; border: 2px dashed var(--primary-color); border-radius: 20px; padding: 20px; margin-bottom: 20px; position: relative; }
+        .acc-box small { color: #718096; text-transform: uppercase; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; }
+        .acc-box h3 { margin: 5px 0; color: var(--secondary-color); font-size: 1.3rem; }
+        .acc-box p { margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--primary-color); letter-spacing: 1px; }
+        .copy-btn { position: absolute; top: 15px; right: 15px; color: var(--primary-color); font-size: 1.2rem; cursor: pointer; padding: 5px; }
+
+        .instruction-box { background: #fffaf0; border-left: 5px solid #f6ad55; padding: 15px; text-align: left; font-size: 0.9rem; line-height: 1.5; border-radius: 10px; margin-bottom: 20px; color: #744210; }
+
+        textarea { width: 100%; height: 120px; border-radius: 15px; border: 2px solid #e2e8f0; padding: 15px; box-sizing: border-box; font-size: 1rem; margin-bottom: 20px; outline: none; transition: border-color 0.3s; resize: none; }
+        textarea:focus { border-color: var(--primary-color); }
+
+        .btn-main { background: var(--primary-color); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3); transition: transform 0.2s; }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-back { background: none; border: none; color: #a0aec0; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; font-size: 0.95rem; }
         
-        .logo-container { text-align: center; padding: 20px 0; }
-        .main-logo { font-size: 40px; font-weight: 900; color: var(--gold); text-shadow: 2px 2px 0px #8a6d00, 4px 4px 10px rgba(0,0,0,0.5); }
-
-        .play-btn-large { background: linear-gradient(to bottom, #ffcc00, #ff9900); color: #000; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0px 5px 15px rgba(255, 204, 0, 0.4); margin: 20px 0; transition: transform 0.2s; width: 80%; }
-        .play-btn-large:active { transform: scale(0.95); }
-
-        .coming-soon-container { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 10px; width: 100%; }
-        .coming-soon-box-3d { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,204,0,0.1); border-radius: 12px; padding: 10px; text-align: center; width: 70%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .cs-title-3d { font-size: 18px; color: #888; font-weight: bold; }
-        .cs-text-3d { font-size: 10px; color: var(--gold); background: rgba(0,0,0,0.5); padding: 2px 10px; border-radius: 10px; }
-
-        .back-btn { background: none; border: none; color: var(--gold); font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .stake-btn { background: #3d1475; border: 2px solid var(--gold); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 10px; cursor: pointer; color: white; transition: 0.3s; }
-        .stake-btn:hover { background: #4e1a96; }
-
-        .ball-history { display: grid; grid-template-columns: repeat(15, 1fr); gap: 2px; margin-bottom: 10px; background: #000; padding: 5px; border: 1px solid var(--gold); }
-        .ball { font-size: 8px; text-align: center; border: 1px solid #333; color: #555; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
-        .ball.active { background: var(--gold); color: #000; font-weight: bold; box-shadow: 0 0 5px var(--gold); }
-
-        .card-grid { width: 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: #fff; padding: 2px; border-radius: 4px; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #eee; color: #000; font-weight: bold; font-size: 11px; border: 1px solid #ccc; cursor: pointer; }
-        .cell.marked { background: var(--gold) !important; color: #000; }
-        .cell.last-win { background: var(--green) !important; color: white !important; }
-
-        .footer { position: absolute; bottom: 0; width: 100%; height: 65px; background: var(--card-bg); display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; border-top: 1px solid var(--gold); z-index: 10; }
-        .footer-item { text-align: center; cursor: pointer; color: #aaa; font-size: 11px; }
-        .footer-item.active { color: var(--gold); }
-        .footer-item i { font-size: 18px; margin-bottom: 3px; }
-
-        #win-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .btn { width: 100%; padding: 12px; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 5px; }
-        input, select, textarea { width: 90%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #444; background: #fff; }
-        
-        .account-menu { background: rgba(255,255,255,0.05); margin-bottom: 10px; padding: 15px; border-radius: 10px; border-left: 4px solid var(--gold); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .logout-menu { border-left-color: var(--red); color: var(--red); }
+        .footer-text { margin-top: 25px; font-size: 0.8rem; color: #cbd5e0; text-align: center; }
     </style>
 </head>
 <body>
 
-<div id="win-overlay">
-    <h1 style="color:var(--gold); font-size: 50px; text-shadow: 0 0 20px var(--gold);">BINGO!</h1>
-    <h3 id="winner-info" style="color:white;"></h3>
-    <h2 id="win-amt-display" style="color:var(--gold);"></h2>
-    <div class="card-grid" id="winner-card-display" style="width: 200px; margin: 15px auto;"></div>
-    <button onclick="closeWinOverlay()" class="btn" style="background:var(--gold); width: 150px;">ተመለስ</button>
-</div>
-
-<div class="app">
+<div class="card">
     <div class="header">
-        <div id="header-left">
-            <button id="general-back-btn" class="back-btn" style="display:none;" onclick="goBack()"><i class="fas fa-chevron-left"></i></button>
-            <span id="header-logo" style="color:var(--gold); font-weight:bold;">ARDI BINGO</span>
-        </div>
-        <div style="background:rgba(0,0,0,0.5); padding:5px 12px; border-radius:15px; border:1px solid var(--gold); font-weight: bold;">
-            <span id="u-bal">0.00</span> ETB
-        </div>
+        <img src="https://kingtattoo-et.github.io/Ardi-payment/ardi%20logo.png.png" alt="Logo">
+        <h2>Manual Deposit</h2>
     </div>
 
     <div class="content">
-        <div id="view-welcome" class="view" style="display:block; text-align:center;">
-            <div class="logo-container">
-                <div class="main-logo">ARDI BINGO</div>
+        <div id="selectionPage">
+            <div class="selection-title">ለመቀጠል የሚጠቀሙትን ባንክ ይምረጡ</div>
+            
+            <div class="bank-item" onclick="openDeposit('CBE Bank', '1000277987067')">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Commercial_Bank_of_Ethiopia_logo.png/220px-Commercial_Bank_of_Ethiopia_logo.png" alt="CBE">
+                <div class="bank-info"><b>CBE Bank</b><span>Commercial Bank of Ethiopia</span></div>
+                <i class="fas fa-chevron-right" style="color: #cbd5e0;"></i>
             </div>
-            <button class="play-btn-large" onclick="openStakeView()">🎮 Play Bingo</button>
-            <div class="coming-soon-container">
-                <div class="coming-soon-box-3d">
-                    <div class="cs-title-3d">SPIN <i class="fas fa-sync-alt fa-spin"></i></div>
-                    <div class="cs-text-3d">COMING SOON</div>
-                </div>
-                <div class="coming-soon-box-3d">
-                    <div class="cs-title-3d">KENO <i class="fas fa-th"></i></div>
-                    <div class="cs-text-3d">COMING SOON</div>
-                </div>
+
+            <div class="bank-item" onclick="openDeposit('CBE Birr', '0979429028')">
+                <img src="https://kingtattoo-et.github.io/Ardi-payment/cbebirr.png" alt="CBE Birr">
+                <div class="bank-info"><b>CBE Birr</b><span>Mobile Banking</span></div>
+                <i class="fas fa-chevron-right" style="color: #cbd5e0;"></i>
             </div>
-        </div>
 
-        <div id="view-stake" class="view" style="display:none;">
-            <h3 style="text-align:center; color:var(--gold);">STAKE ይምረጡ</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div class="stake-btn" onclick="openCards(20)">20 ብር <span id="t-20" style="display:block; font-size:12px; color:var(--gold);">02:00</span></div>
-                <div class="stake-btn" onclick="openCards(30)">30 ብር <span id="t-30" style="display:block; font-size:12px; color:var(--gold);">02:00</span></div>
-                <div class="stake-btn" onclick="openCards(50)">50 ብር <span id="t-50" style="display:block; font-size:12px; color:var(--gold);">02:00</span></div>
-                <div class="stake-btn" onclick="openCards(100)">100 ብር <span id="t-100" style="display:block; font-size:12px; color:var(--gold);">02:00</span></div>
+            <div class="bank-item" onclick="openDeposit('Telebirr', '0979429028')">
+                <img src="https://kingtattoo-et.github.io/Ardi-payment/telebirr.png" alt="Telebirr">
+                <div class="bank-info"><b>Telebirr</b><span>Mobile Money</span></div>
+                <i class="fas fa-chevron-right" style="color: #cbd5e0;"></i>
             </div>
+            
+            <div class="footer-text">Copyright © Ardi-Bingo 2026</div>
         </div>
 
-        <div id="view-wallet" class="view" style="display:none;">
-            <div style="background:var(--card-bg); padding:15px; border-radius:10px; border:1px solid var(--gold);">
-               <h4 style="margin:0 0 10px 0; color:var(--gold);">Deposit / Withdraw</h4>
-               <p id="bank-info" style="font-size:11px; background:#000; padding:10px; border:1px solid #444; color:var(--gold);"></p>
-               <select id="dep-bank" onchange="updateBankInfo()"><option value="Telebirr">Telebirr</option><option value="CBEBirr">CBE Birr</option></select>
-               <input type="number" id="dep-amt" placeholder="የብር መጠን">
-               <input type="text" id="dep-tx" placeholder="Transaction ID">
-               <input type="file" id="dep-file" style="color:white; border:none; background:none;">
-               <button onclick="deposit()" class="btn" style="background:var(--green); color:white;">አስገባ</button>
-               <hr style="border: 0.1px solid #444; margin: 15px 0;">
-               <input type="number" id="wd-amt" placeholder="የማውጣት መጠን">
-               <input type="text" id="wd-phone" placeholder="ስልክ ቁጥር">
-               <button onclick="withdraw()" class="btn" style="background:var(--red); color:white;">አውጣ</button>
+        <div id="depositPage" class="deposit-panel">
+            <button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-left"></i> &nbsp; ተመለስ</button>
+            <h4 id="bankTitle" style="margin: 0 0 15px 0; color: var(--secondary-color);"></h4>
+            
+            <div class="acc-box">
+                <small>ACCOUNT NAME</small>
+                <h3>Yordanos</h3>
+                <p id="accNumber"></p>
+                <i class="fas fa-copy copy-btn" onclick="copyValue()"></i>
             </div>
-        </div>
 
-        <div id="view-account" class="view" style="display:none;">
-            <h3 style="color:var(--gold); text-align:center;">My Account</h3>
-            <div class="account-menu" onclick="showHistory()"><span><i class="fas fa-history"></i> የጨዋታ ታሪክ</span><i class="fas fa-chevron-right"></i></div>
-            <div class="account-menu" onclick="showRules()"><span><i class="fas fa-book"></i> ህጎች</span><i class="fas fa-chevron-right"></i></div>
-            <div class="account-menu logout-menu" onclick="logout()"><span><i class="fas fa-sign-out-alt"></i> Logout</span><i class="fas fa-chevron-right"></i></div>
-        </div>
-
-        <div id="view-cards" class="view" style="display:none;"><div id="card-container" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:8px;"></div></div>
-        
-        <div id="view-preview" class="view" style="display:none; text-align:center;">
-            <h3 style="color:var(--gold);">Card #<span id="preview-id"></span></h3>
-            <div class="card-grid" id="preview-grid" style="width:250px; margin:auto; margin-bottom:20px;"></div>
-            <div style="display:flex; justify-content: space-around; gap:10px;">
-                <button onclick="buyConfirmed()" class="btn" style="background:var(--green); color:white; flex:1;">ግዛ</button>
-                <button onclick="showView('view-cards')" class="btn" style="background:var(--red); color:white; flex:1;">ተመለስ</button>
+            <div class="instruction-box">
+                <b>አሰራር፡</b><br>
+                1. ከላይ ባለው ቁጥር ብር ያስገቡ።<br>
+                2. የደረሳችሁን የባንክ SMS ሙሉውን ኮፒ አድርገው ከታች ባለው ሳጥን ውስጥ ፔስት (Paste) ያድርጉ።
             </div>
-        </div>
 
-        <div id="view-play" class="view" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <button onclick="cancelCurrentGame()" style="background:var(--red); color:white; border:none; padding:5px 10px; border-radius:5px; font-size:12px;">Cancel ❌</button>
-                <div style="background:var(--gold); color:#000; padding:5px 10px; border-radius:5px; font-weight:bold;" id="live-win-amt">0.00 ETB</div>
-            </div>
-            <div class="ball-history" id="ball-box"></div>
-            <div style="text-align:center; margin-bottom:15px;">
-                <small style="color:var(--gold);">ተረኛ ቁጥር</small>
-                <div style="font-size:50px; color:white; font-weight:bold; text-shadow: 0 0 10px var(--gold);" id="cur-num">--</div>
-            </div>
-            <div id="play-area"></div>
+            <textarea id="smsInput" placeholder="የባንክ SMS እዚህ ጋር ፔስት ያድርጉ..."></textarea>
+            <button class="btn-main" onclick="sendToBot()">Send for Verification</button>
         </div>
-
-        <div id="view-history" class="view" style="display:none;">
-            <h4 style="color:var(--gold);">የጨዋታ ታሪክ</h4>
-            <div id="history-list"></div>
-        </div>
-        
-        <div id="view-rules" class="view" style="display:none;">
-            <h4 style="color:var(--gold);">ህጎች</h4>
-            <p style="font-size:13px; line-height:1.6;">1. የሚፈልጉትን ስቴክ ይምረጡ።<br>2. ካርድ ይግዙ።<br>3. ቁጥሮች ሲወጡ ይጫኑ።<br>4. አንድ መስመር ሲሞላ ቢንጎ ይበሉ!</p>
-        </div>
-    </div>
-
-    <div class="footer">
-        <div class="footer-item active" id="f-home" onclick="showView('view-welcome')"><i class="fas fa-home"></i><br>መነሻ</div>
-        <div class="footer-item" id="f-wallet" onclick="showView('view-wallet')"><i class="fas fa-wallet"></i><br>ዋሌት</div>
-        <div class="footer-item" id="f-account" onclick="showView('view-account')"><i class="fas fa-user-circle"></i><br>Account</div>
-    </div>
-</div>
-
-<div id="auth" style="position:fixed; inset:0; background:var(--primary-bg); z-index:500; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-    <div style="background:var(--card-bg); padding:25px; border:2px solid var(--gold); width:85%; text-align:center; border-radius:15px;">
-        <h2 style="color:var(--gold); margin-bottom:20px;">ARDI BINGO</h2>
-        <input type="text" id="phone" placeholder="ስልክ ቁጥር">
-        <input type="password" id="pass" placeholder="ፓስወርድ">
-        <button onclick="auth('login')" class="btn" style="background:var(--gold); margin-top:15px; color:#000;">ግባ (Login)</button>
-        <button onclick="auth('register')" class="btn" style="background:var(--green); color:white; margin-top:10px;">ተመዝገብ (Register)</button>
     </div>
 </div>
 
 <script>
-    const socket = io();
-    let user = { phone: '', balance: 0, activeCards: [] };
-    let curStake = 0, tempCardId = 0, tempNums = [];
-    let viewHistory = ['view-welcome'];
-    let lastCalledNumberAtBingoCall = 0;
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    let currentBank = "";
 
-    // Initialize ball box
-    const ballBox = document.getElementById('ball-box');
-    for(let i=1; i<=75; i++){
-        const d = document.createElement('div'); d.className='ball'; d.id=`ball-${i}`; d.innerText=i; ballBox.appendChild(d);
-    }
-
-    function showView(viewId, pushToHistory = true) {
-        document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-        const target = document.getElementById(viewId);
-        if(target) target.style.display = 'block';
-
-        // Update footer active state
-        document.querySelectorAll('.footer-item').forEach(f => f.classList.remove('active'));
-        if(viewId === 'view-welcome') document.getElementById('f-home').classList.add('active');
-        if(viewId === 'view-wallet') document.getElementById('f-wallet').classList.add('active');
-        if(viewId === 'view-account') document.getElementById('f-account').classList.add('active');
-
-        // Header Buttons
-        const backBtn = document.getElementById('general-back-btn');
-        const logo = document.getElementById('header-logo');
-        if (viewId === 'view-welcome' || viewId === 'view-play') {
-            backBtn.style.display = 'none'; logo.style.display = 'block';
-            if(pushToHistory) viewHistory = [viewId];
-        } else {
-            backBtn.style.display = 'block'; logo.style.display = 'none';
-            if(pushToHistory) viewHistory.push(viewId);
-        }
+    function openDeposit(bank, acc) {
+        currentBank = bank;
+        document.getElementById('selectionPage').style.display = 'none';
+        document.getElementById('depositPage').style.display = 'block';
+        document.getElementById('bankTitle').innerText = bank + " Deposit";
+        document.getElementById('accNumber').innerText = acc;
     }
 
     function goBack() {
-        if (viewHistory.length > 1) {
-            viewHistory.pop();
-            const lastView = viewHistory[viewHistory.length - 1];
-            showView(lastView, false);
-        } else {
-            showView('view-welcome');
+        document.getElementById('selectionPage').style.display = 'block';
+        document.getElementById('depositPage').style.display = 'none';
+        document.getElementById('smsInput').value = "";
+    }
+
+    function copyValue() {
+        const val = document.getElementById('accNumber').innerText;
+        navigator.clipboard.writeText(val);
+        alert("ቁጥሩ ተገልብጧል (Copied)!");
+    }
+
+    function sendToBot() {
+        const sms = document.getElementById('smsInput').value.trim();
+        if (sms.length < 5) {
+            alert("እባክዎ ትክክለኛ የባንክ SMS ያስገቡ!");
+            return;
         }
-    }
-
-    async function auth(type) {
-        const p = document.getElementById('phone').value, ps = document.getElementById('pass').value;
-        if(!p || !ps) return Swal.fire('ስህተት', 'መረጃ ይሙሉ', 'error');
-        try {
-            const res = await fetch('/api/auth', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ phone:p, password:ps, type })});
-            const data = await res.json();
-            if(data.success) { 
-                user.phone = p; user.balance = data.balance; 
-                document.getElementById('u-bal').innerText = data.balance.toFixed(2); 
-                document.getElementById('auth').style.display = 'none'; 
-                showView('view-welcome'); 
-            } else {
-                Swal.fire('ስህተት', data.msg, 'error');
-            }
-        } catch(e) { Swal.fire('Error', 'Server connection failed', 'error'); }
-    }
-
-    function logout() {
-        user = { phone: '', balance: 0, activeCards: [] };
-        document.getElementById('auth').style.display = 'flex';
-        showView('view-welcome');
-    }
-
-    // Wallet functions
-    function updateBankInfo() {
-        const bank = document.getElementById('dep-bank').value;
-        document.getElementById('bank-info').innerHTML = `በ <b>09XXXXXXXX</b> (ስም: <b>Yordanos</b>) በ${bank} ብር ያስገቡና Transaction ID ይላኩ።`;
-    }
-    updateBankInfo();
-
-    socket.on('balanceUpdate', (d) => { 
-        if(d.phone === user.phone){ 
-            user.balance = d.newBalance; 
-            document.getElementById('u-bal').innerText = d.newBalance.toFixed(2); 
-        } 
-    });
-
-    function openStakeView() { showView('view-stake'); }
-
-    function openCards(s) {
-        curStake = s;
-        socket.emit('getSold', s, (sold) => {
-            const container = document.getElementById('card-container'); 
-            container.innerHTML = '';
-            for(let i=1; i<=100; i++) {
-                const div = document.createElement('div');
-                div.style = "padding:12px; border:1px solid var(--gold); background:var(--card-bg); text-align:center; cursor:pointer; color:white; border-radius:5px;";
-                div.innerText = i;
-                if (sold && sold[i]) { 
-                    div.style.background = "#444"; div.style.opacity = "0.5"; div.onclick=null; 
-                } else { 
-                    div.onclick = () => { 
-                        tempCardId = i; tempNums = genNums(); 
-                        document.getElementById('preview-id').innerText = i; 
-                        renderGrid('preview-grid', tempNums); 
-                        showView('view-preview'); 
-                    }; 
-                }
-                container.appendChild(div);
-            }
-            showView('view-cards');
-        });
-    }
-
-    async function buyConfirmed() {
-        if(user.balance < curStake) return Swal.fire('ማሳሰቢያ', 'በቂ ባላንስ የለዎትም!', 'warning');
-        const res = await fetch('/api/buy-card', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone:user.phone, stake:curStake, cardId:tempCardId, nums:tempNums})});
-        const data = await res.json();
-        if(data.success) { 
-            user.activeCards.push({ stake: curStake, nums: tempNums, cardId: tempCardId }); 
-            user.balance = data.newBalance; 
-            document.getElementById('u-bal').innerText = data.newBalance.toFixed(2);
-            Swal.fire('ተሳክቷል', `ካርድ #${tempCardId} ገዝተዋል!`, 'success');
-            showView('view-welcome');
-        } else {
-            Swal.fire('ማሳሰቢያ', data.msg, 'warning');
-        }
-    }
-
-    socket.on('gameUpdate', (gs) => {
-        const activeStake = user.activeCards.length > 0 ? user.activeCards[0].stake : null;
         
-        // Update all timers in stake view
-        [20, 30, 50, 100].forEach(st => {
-            const timerEl = document.getElementById(`t-${st}`);
-            if(gs[st] && timerEl) {
-                if(gs[st].timer > 0) {
-                    timerEl.innerText = `${Math.floor(gs[st].timer/60)}:${(gs[st].timer%60).toString().padStart(2,'0')}`;
-                } else {
-                    timerEl.innerText = "መጫወት...";
-                }
-            }
-        });
-
-        // If user has cards and game is calling numbers
-        const g = activeStake ? gs[activeStake] : null;
-        if(g && g.isCallStarted) {
-            showView('view-play', false);
-            const lastNum = g.calledNumbers[g.calledNumbers.length-1] || '--';
-            document.getElementById('cur-num').innerText = lastNum;
-            lastCalledNumberAtBingoCall = lastNum;
-            
-            const totalSold = Object.keys(g.soldCards).length;
-            document.getElementById('live-win-amt').innerText = (totalSold * activeStake * 0.8).toFixed(2) + " ETB";
-            
-            g.calledNumbers.forEach(n => {
-                const b = document.getElementById(`ball-${n}`);
-                if(b) b.classList.add('active');
-            });
-
-            const playArea = document.getElementById('play-area');
-            if(playArea.innerHTML === '') {
-                user.activeCards.forEach((card, idx) => {
-                    const w = document.createElement('div'); w.style.marginBottom = "15px";
-                    w.innerHTML = `<div style="text-align:center; font-size:12px; color:var(--gold);">ካርድ #${card.cardId}</div><div class="card-grid" id="grid-${idx}"></div><button onclick="callBingo(${idx})" class="btn" style="background:var(--gold); color:#000; margin-top:5px;">BINGO</button>`;
-                    playArea.appendChild(w); 
-                    renderGrid(`grid-${idx}`, card.nums);
-                });
-            }
-        }
-    });
-
-    function renderGrid(id, arr) {
-        const g = document.getElementById(id); g.innerHTML = '';
-        arr.forEach((n) => {
-            const d = document.createElement('div'); d.className='cell'; d.innerText=n;
-            if(n === 'FREE') d.classList.add('marked');
-            d.onclick = function() { this.classList.toggle('marked'); };
-            g.appendChild(d);
-        });
+        // ዳታውን ወደ ቦቱ ይልካል
+        tg.sendData(JSON.stringify({
+            bank: currentBank,
+            message: sms
+        }));
+        tg.close();
     }
-
-    function genNums() {
-        let n = new Array(25);
-        const ranges = [[1, 15], [16, 30], [31, 45], [46, 60], [61, 75]];
-        for (let col = 0; col < 5; col++) {
-            let colNums = [];
-            let [min, max] = ranges[col];
-            while (colNums.length < 5) {
-                let num = Math.floor(Math.random() * (max - min + 1)) + min;
-                if (!colNums.includes(num)) colNums.push(num);
-            }
-            for (let row = 0; row < 5; row++) { n[row * 5 + col] = colNums[row]; }
-        }
-        n[12] = 'FREE';
-        return n;
-    }
-
-    function callBingo(idx) { 
-        socket.emit('callBingo', { 
-            phone: user.phone, 
-            stake: user.activeCards[idx].stake, 
-            nums: user.activeCards[idx].nums, 
-            cardId: user.activeCards[idx].cardId,
-            lastCalled: lastCalledNumberAtBingoCall 
-        }); 
-    }
-
-    socket.on('gameOver', (d) => {
-        if (user.activeCards.some(c => c.stake == d.stake) || user.phone === d.winner) {
-            document.getElementById('winner-info').innerText = `ካርድ #${d.cardId} አሸንፏል!`;
-            document.getElementById('win-amt-display').innerText = `${d.winAmount.toFixed(2)} ETB`;
-            const g = document.getElementById('winner-card-display'); g.innerHTML = '';
-            d.winnerCard.forEach(n => {
-                const cell = document.createElement('div'); cell.className = 'cell'; cell.innerText = n;
-                if(d.winningNumbers.includes(n) || n === 'FREE') cell.classList.add('marked');
-                if(n === d.winningNumbers[d.winningNumbers.length-1]) cell.classList.add('last-win');
-                g.appendChild(cell);
-            });
-            document.getElementById('win-overlay').style.display = 'flex';
-        }
-    });
-
-    function closeWinOverlay() { 
-        document.getElementById('win-overlay').style.display = 'none'; 
-        resetGameUI(); 
-    }
-    
-    function resetGameUI() {
-        user.activeCards = []; 
-        document.getElementById('play-area').innerHTML = '';
-        document.querySelectorAll('.ball').forEach(b => b.classList.remove('active'));
-        showView('view-welcome');
-    }
-
-    socket.on('gameEndedAuto', () => resetGameUI());
-    socket.on('err', (msg) => Swal.fire('ማሳሰቢያ', msg, 'info'));
-    socket.on('bingoFailed', (msg) => Swal.fire('ቢንጎ አልተሳካም', msg, 'error'));
-
 </script>
+
 </body>
 </html>
