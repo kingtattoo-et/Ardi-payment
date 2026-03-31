@@ -6,7 +6,8 @@ const app = express();
 app.get('/', (req, res) => res.send('Ardi Bingo is LIVE!'));
 app.listen(process.env.PORT || 10000);
 
-const bot = new Telegraf('8684712579:AAFGw1U396jIv-i1FjW57vRyyKy1ahcUCQw');
+// በምስሉ ላይ በሚታየው አዲሱ ቶክን ተተክቷል
+const bot = new Telegraf('8684712579:AAE9JK0cdSK-cVeycF7xAd_KSrUUqmN5HWI');
 
 const DB_FILE = './database.json';
 let players = {};
@@ -141,7 +142,6 @@ bot.on('text', async (ctx) => {
     const userId = ctx.from.id;
     const msgText = ctx.message.text;
 
-    // Username መቀየር ከሆነ
     if (players[userId]?.state === 'WAITING_FOR_USERNAME') {
         players[userId].username = msgText;
         players[userId].state = null;
@@ -149,7 +149,6 @@ bot.on('text', async (ctx) => {
         return ctx.reply(`✅ መለያ ስምዎ ወደ *${msgText}* ተቀይሯል!`, { parse_mode: 'Markdown' });
     }
 
-    // ለዲፖዚት ቁጥር ከሆነ
     if (!isNaN(msgText) && parseInt(msgText) >= 50) {
         players[userId].tempAmount = parseInt(msgText);
         saveToDB();
